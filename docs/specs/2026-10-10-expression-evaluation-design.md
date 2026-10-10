@@ -177,7 +177,8 @@ While typing: the expression is the main line (auto-shrinking, scrolls to the en
 
 - Reused unchanged: API client, `format.ts`, `useHistory`, `useTheme`, `Key`, `HistoryPanel`, `StatusBanner`, tokens.
 - `Keypad` takes the key list as a prop (`BASIC_KEYS`, `SCIENTIFIC_KEYS`).
-- Basic mode's reducer, hook and tests are not modified.
+- Basic mode's reducer is not modified. One history serves both modes, so `Calculator` owns `useHistory()` and passes its `add` to `useCalculator` and `useScientific` (a small dependency injection; Basic's behaviour does not change).
+- `Calculator` holds both hooks; the mode decides which one renders and receives keys. Switching mode clears both entries.
 
 ### 4.7 Tests
 
