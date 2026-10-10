@@ -98,9 +98,10 @@ func (p *parser) expr(rbp int) (Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		// "200 + 15%" means 15% of 200, as on a calculator.
-		if pct, isPct := right.(*Pct); isPct && (t.Kind == Plus || t.Kind == Minus) {
-			left = &PctOf{Op: t.Kind, Base: left, Rate: pct.X}
+		// "200 + 15%" means 15% of 200, as on a calculator; so does a signed
+		// "5 + −15%", which Basic mode computes as percent(5, −15).
+		if rate, ok := percentRate(right); ok && (t.Kind == Plus || t.Kind == Minus) {
+			left = &PctOf{Op: t.Kind, Base: left, Rate: rate}
 		} else {
 			left = &Binary{Op: t.Kind, L: left, R: right}
 		}
@@ -151,6 +152,19 @@ func (p *parser) nested(opener Token, rbp int) (Node, error) {
 	p.depth++
 	defer func() { p.depth-- }()
 	return p.expr(rbp)
+}
+
+// percentRate reports whether n is "x%" or "±x%", returning the rate (x or ±x).
+func percentRate(n Node) (Node, bool) {
+	switch n := n.(type) {
+	case *Pct:
+		return n.X, true
+	case *Unary:
+		if pct, ok := n.X.(*Pct); ok && (n.Op == Minus || n.Op == Plus) {
+			return &Unary{Op: n.Op, X: pct.X}, true
+		}
+	}
+	return nil, false
 }
 
 func describe(t Token) string {

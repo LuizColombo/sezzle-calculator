@@ -29,6 +29,9 @@ func TestEval(t *testing.T) {
 		{"−−3", "3"},
 		{"+3", "3"},
 		{"1 ÷ 3 × 3", "1"},
+		// a signed percentage is still a percentage of the left operand, as in Basic mode
+		{"5 + −15%", "4.25"},
+		{"200 − −15%", "230"},
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
