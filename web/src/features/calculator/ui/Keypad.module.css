@@ -1,6 +1,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: clamp(56px, 17vw, 72px);
+  /* Width-driven on most phones, height-capped on short ones (iPhone SE). */
+  grid-auto-rows: clamp(48px, min(17vw, 9dvh), 72px);
   gap: var(--space-3);
 }

@@ -46,6 +46,6 @@ describe("Display", () => {
 
   it("uses a smaller size for long values", () => {
     render(<Display {...base} value="1234567890123456" />);
-    expect(screen.getByRole("status")).toHaveAttribute("data-size", "sm");
+    expect(screen.getByRole("status")).toHaveAttribute("data-size", "xs");
   });
 });

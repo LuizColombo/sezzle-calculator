@@ -58,6 +58,7 @@ describe("displaySize", () => {
   it("shrinks as the text grows", () => {
     expect(displaySize("123")).toBe("lg");
     expect(displaySize("123,456,789")).toBe("md");
-    expect(displaySize("1,234,567,890,123,456")).toBe("sm");
+    expect(displaySize("1,234,567,890,123")).toBe("sm");
+    expect(displaySize("-1,234,567,890,123,456")).toBe("xs");
   });
 });

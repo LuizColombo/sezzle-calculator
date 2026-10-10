@@ -87,11 +87,12 @@ export function formatDisplay(raw: string): string {
   return `${sign}${groupThousands(roundedInt)}${roundedFrac ? `.${roundedFrac}` : ""}`;
 }
 
-export type DisplaySize = "lg" | "md" | "sm";
+export type DisplaySize = "lg" | "md" | "sm" | "xs";
 
-/** Picks a font-size step so long values still fit the display. */
+/** Picks a font-size step so long values still fit the display, down to 320 px wide. */
 export function displaySize(formatted: string): DisplaySize {
   if (formatted.length <= 9) return "lg";
   if (formatted.length <= 13) return "md";
-  return "sm";
+  if (formatted.length <= 18) return "sm";
+  return "xs";
 }

@@ -44,6 +44,7 @@
   --text-display-lg: clamp(48px, 13vw, 72px);
   --text-display-md: clamp(36px, 9vw, 52px);
   --text-display-sm: clamp(24px, 6vw, 34px);
+  --text-display-xs: clamp(19px, 5vw, 28px);
   --text-key: 28px;
   --text-key-small: 22px;
   --text-expression: 18px;
