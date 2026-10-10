@@ -27,8 +27,10 @@ const shown = (t: ExprToken) =>
 
 /**
  * The display. While typing, the expression is the main line and the
- * preview sits below it; on "=", shared layout ids make the result grow into
- * the main line while the expression shrinks into the line above.
+ * preview sits below it; on "=", the result rises into the main line and the
+ * expression moves to the line above. Animations are keyed on the reducer's
+ * replacement counter (not shared layout ids, which could leave the result
+ * stuck at opacity 0 when the preview it morphed from had already unmounted).
  */
 export function Display({ state, preview }: DisplayProps) {
   const lineRef = useRef<HTMLSpanElement>(null);
@@ -51,7 +53,13 @@ export function Display({ state, preview }: DisplayProps) {
     <section className={styles.display} aria-label="display">
       <p className={cx(styles.expression, detail !== null && styles.detail)}>
         {showingResult ? (
-          <motion.span layoutId="sci-expression" transition={swap} className={styles.line}>
+          <motion.span
+            key={state.replaced}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={swap}
+            className={styles.line}
+          >
             {result.expression} =
           </motion.span>
         ) : (
@@ -72,16 +80,18 @@ export function Display({ state, preview }: DisplayProps) {
         )}
       >
         {showingResult ? (
-          <motion.span layoutId="sci-value" transition={swap} className={styles.digits}>
+          // Keyed on the replacement counter: each new result rises into place.
+          <motion.span
+            key={state.replaced}
+            initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={swap}
+            className={styles.digits}
+          >
             {mainText}
           </motion.span>
         ) : (
-          <motion.span
-            ref={lineRef}
-            layoutId="sci-expression"
-            transition={swap}
-            className={styles.tokens}
-          >
+          <span ref={lineRef} className={styles.tokens}>
             {tokens.length === 0
               ? "0"
               : tokens.map((t, i) => (
@@ -94,14 +104,14 @@ export function Display({ state, preview }: DisplayProps) {
                     {shown(t)}
                   </span>
                 ))}
-          </motion.span>
+          </span>
         )}
       </output>
 
       <p className={cx(styles.secondary, detail !== null && styles.detail)} data-testid="preview">
         {detail ??
           (!showingResult && preview !== null ? (
-            <motion.span layoutId="sci-value" transition={swap}>
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {formatDisplay(preview)}
             </motion.span>
           ) : (

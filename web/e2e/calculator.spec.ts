@@ -19,22 +19,22 @@ test("adds decimals exactly through the real API", async ({ page }) => {
   await expect(page.getByText("0.1 + 0.2 =")).toBeVisible();
 });
 
+/**
+ * The result must actually be seen, not just be in the DOM: Playwright counts
+ * opacity 0 as visible, and a stuck animation once left results invisible.
+ */
+const expectShown = async (page: Page, text: string) => {
+  const status = page.getByRole("status");
+  await expect(status).toHaveText(text);
+  await expect(status.locator("span").first()).toHaveCSS("opacity", "1");
+};
+
 test("applies operator precedence and parentheses", async ({ page }) => {
   await press(page, "2", "add", "3", "multiply", "4", "equals");
-  await expect(page.getByRole("status")).toHaveText("14");
-  await press(
-    page,
-    "all clear",
-    "open parenthesis",
-    "2",
-    "add",
-    "3",
-    "close parenthesis",
-    "multiply",
-    "4",
-    "equals",
-  );
-  await expect(page.getByRole("status")).toHaveText("20");
+  await expectShown(page, "14");
+  await press(page, "all clear", "open parenthesis", "2", "add", "3", "close parenthesis");
+  await press(page, "multiply", "4", "equals");
+  await expectShown(page, "20");
 });
 
 test("previews the result while typing", async ({ page }) => {
