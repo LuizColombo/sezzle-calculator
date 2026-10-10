@@ -113,7 +113,7 @@ Branch on the fragment of `type`; show `detail` to people. **400** means the req
 
 ### result-too-large
 
-**422.** The result overflows or underflows 10^±1000, e.g. `1e600 × 1e600`.
+**422.** The result overflows or underflows 10^±1000, e.g. `1e600 × 1e600`. For `percent`, the intermediate `percent ÷ 100` must also be in range, so `percent` of `1e-1000` is rejected even when the final value would fit.
 
 ### invalid-operation
 
