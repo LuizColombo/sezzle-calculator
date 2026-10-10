@@ -67,8 +67,6 @@
     padding: var(--space-6);
   }
 
-
-
   .card {
     /* 440 px, shrinking only if the window is too narrow for card + panel. */
     flex: 0 1 440px;
