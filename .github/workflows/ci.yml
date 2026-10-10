@@ -37,6 +37,8 @@ jobs:
           { echo '### API coverage'; echo '```'; go tool cover -func=coverage.out | tail -1; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Fuzz number parsing
         run: go test -run='^$' -fuzz=FuzzParse -fuzztime=20s ./internal/calc
+      - name: Fuzz expression parsing and evaluation
+        run: go test -run='^$' -fuzz=FuzzParse -fuzztime=20s ./internal/expr
       - uses: actions/upload-artifact@v7
         with:
           name: api-coverage

@@ -15,6 +15,7 @@ lint:
 
 fuzz:
 	go test -run='^$$' -fuzz=FuzzParse -fuzztime=20s ./internal/calc
+	go test -run='^$$' -fuzz=FuzzParse -fuzztime=20s ./internal/expr
 
 build:
 	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o api ./cmd/api
