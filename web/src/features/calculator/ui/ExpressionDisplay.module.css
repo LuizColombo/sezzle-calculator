@@ -1,0 +1,28 @@
+/* Long expressions scroll horizontally; the latest token stays in view. */
+.main {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.main::-webkit-scrollbar {
+  display: none;
+}
+
+.tokens {
+  display: inline-block;
+  white-space: pre;
+}
+
+.errorToken {
+  color: var(--color-error);
+  text-decoration: underline wavy;
+  text-underline-offset: 6px;
+}
+
+.secondary {
+  min-height: 1.4em;
+  font-size: var(--text-expression);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
