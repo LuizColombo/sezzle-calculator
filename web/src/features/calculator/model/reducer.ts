@@ -117,6 +117,12 @@ function onToggleSign(state: CalculatorState): CalculatorState {
 
 // ── operators ─────────────────────────────────────────────────────────────
 
+/** The operand as it is committed to a calculation: "1." → "1", "-0" → "0". */
+function commit(display: string): string {
+  const trimmed = display.endsWith(".") ? display.slice(0, -1) : display;
+  return /^-0(\.0*)?$/.test(trimmed) ? "0" : trimmed;
+}
+
 const describe = (a: string, op: BinaryOperator, b?: string) =>
   b === undefined ? `${a} ${OPERATOR_SYMBOL[op]}` : `${a} ${OPERATOR_SYMBOL[op]} ${b}`;
 
@@ -136,14 +142,15 @@ function completeBinary(
   if (state.phase !== "enteringSecond" || state.firstOperand === null || state.operator === null) {
     return null;
   }
+  const b = commit(state.display);
   const pending: PendingCall = {
     kind: "binary",
     operator: state.operator,
     a: state.firstOperand,
-    b: state.display,
+    b,
     then,
   };
-  return request(state, pending, describe(state.firstOperand, state.operator, state.display));
+  return request(state, pending, describe(state.firstOperand, state.operator, b));
 }
 
 function onOperator(state: CalculatorState, operator: BinaryOperator): CalculatorState {
@@ -151,12 +158,14 @@ function onOperator(state: CalculatorState, operator: BinaryOperator): Calculato
   // "2 + 3 ×" evaluates 2 + 3 first, then continues with × (chaining).
   const chained = completeBinary(state, { type: "chain", nextOperator: operator });
   if (chained) return chained;
+  const first = commit(state.display);
   return {
     ...state,
     phase: "operatorChosen",
-    firstOperand: state.display,
+    display: first,
+    firstOperand: first,
     operator,
-    expression: describe(state.display, operator),
+    expression: describe(first, operator),
     fresh: true,
     error: null,
   };
@@ -172,18 +181,19 @@ function onUnary(state: CalculatorState, operator: UnaryOperator): CalculatorSta
     state.phase === "operatorChosen" || state.phase === "enteringSecond"
       ? "enteringSecond"
       : "result";
+  const value = commit(state.display);
 
   if (operator === "sqrt") {
-    return request(state, { kind: "sqrt", value: state.display, resume }, `√${state.display}`);
+    return request(state, { kind: "sqrt", value, resume }, `√${value}`);
   }
 
   // Calculator convention: "200 + 15 %" means 15 % of 200; elsewhere x % is x / 100.
   const additive = state.operator === "add" || state.operator === "subtract";
   const pending: PendingCall =
     resume === "enteringSecond" && additive && state.firstOperand !== null
-      ? { kind: "percent", value: state.firstOperand, percent: state.display, resume }
-      : { kind: "percent", value: state.display, percent: "1", resume };
-  return request(state, pending, `${state.display}%`);
+      ? { kind: "percent", mode: "ofFirst", value: state.firstOperand, percent: value, resume }
+      : { kind: "percent", mode: "plain", value, resume };
+  return request(state, pending, `${value}%`);
 }
 
 function onRecall(state: CalculatorState, value: string): CalculatorState {
@@ -258,7 +268,8 @@ function onFailure(state: CalculatorState, error: CalculatorError): CalculatorSt
       phase: "enteringSecond",
       display: pending.b,
       expression: secondOperandExpression(state),
-      fresh: false,
+      // The restored text was not typed in this operand, so the next key replaces it.
+      fresh: true,
       pending: null,
       error,
     };
@@ -268,7 +279,7 @@ function onFailure(state: CalculatorState, error: CalculatorError): CalculatorSt
     ...state,
     phase: resumeSecond ? "enteringSecond" : "enteringFirst",
     expression: resumeSecond ? secondOperandExpression(state) : null,
-    fresh: false,
+    fresh: true,
     pending: null,
     error,
   };

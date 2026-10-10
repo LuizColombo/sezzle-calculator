@@ -12,6 +12,10 @@ export type OperationName = {
     : never;
 }[keyof paths];
 
+/** The JSON body an operation expects, e.g. { base: string; exponent: string } for "power". */
+export type RequestBody<N extends OperationName> =
+  paths[`/api/v1/${N}`]["post"]["requestBody"]["content"]["application/json"];
+
 /** The API answered with a Problem Details body (4xx/5xx other than 502–504). */
 export class ApiError extends Error {
   override readonly name = "ApiError";
@@ -54,9 +58,9 @@ const abortError = () => new DOMException("The operation was aborted.", "AbortEr
  * final: a Problem Details body becomes an ApiError. Aborting the signal stops
  * immediately, including during a backoff delay.
  */
-export async function callOperation(
-  name: OperationName,
-  inputs: Record<string, string>,
+export async function callOperation<N extends OperationName>(
+  name: N,
+  inputs: RequestBody<N>,
   options: CallOptions = {},
 ): Promise<ApiResponse> {
   const {

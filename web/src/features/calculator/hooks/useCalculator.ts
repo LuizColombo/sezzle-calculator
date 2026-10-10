@@ -1,21 +1,27 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import { ApiError, callOperation, type CallOptions, type OperationName } from "../api/client";
+import { ApiError, callOperation, type ApiResponse, type CallOptions } from "../api/client";
 import { initialState, reduce } from "../model/reducer";
 import { OPERATOR_SYMBOL, type CalculatorEvent, type PendingCall } from "../model/types";
 import { useHistory } from "./useHistory";
 
 type TuningOptions = Pick<CallOptions, "attempts" | "baseDelayMs">;
 
-function requestFor(pending: PendingCall): { name: OperationName; inputs: Record<string, string> } {
+/** Performs a pending call. Each branch is type-checked against the OpenAPI request body. */
+function perform(pending: PendingCall, options: CallOptions): Promise<ApiResponse> {
   switch (pending.kind) {
-    case "binary":
-      return pending.operator === "power"
-        ? { name: "power", inputs: { base: pending.a, exponent: pending.b } }
-        : { name: pending.operator, inputs: { a: pending.a, b: pending.b } };
+    case "binary": {
+      const { operator, a, b } = pending;
+      return operator === "power"
+        ? callOperation("power", { base: a, exponent: b }, options)
+        : callOperation(operator, { a, b }, options);
+    }
     case "sqrt":
-      return { name: "sqrt", inputs: { value: pending.value } };
+      return callOperation("sqrt", { value: pending.value }, options);
     case "percent":
-      return { name: "percent", inputs: { value: pending.value, percent: pending.percent } };
+      // x % is x ÷ 100, i.e. 1 % of x.
+      return pending.mode === "plain"
+        ? callOperation("percent", { value: pending.value, percent: "1" }, options)
+        : callOperation("percent", { value: pending.value, percent: pending.percent }, options);
   }
 }
 
@@ -26,7 +32,7 @@ function historyExpression(pending: PendingCall): string {
     case "sqrt":
       return `√${pending.value}`;
     case "percent":
-      return pending.percent === "1"
+      return pending.mode === "plain"
         ? `${pending.value}%`
         : `${pending.percent}% of ${pending.value}`;
   }
@@ -62,9 +68,7 @@ export function useCalculator(tuning: TuningOptions = {}) {
   useEffect(() => {
     if (!pending) return;
     const controller = new AbortController();
-    const { name, inputs } = requestFor(pending);
-
-    callOperation(name, inputs, { ...tuningRef.current, signal: controller.signal }).then(
+    perform(pending, { ...tuningRef.current, signal: controller.signal }).then(
       (response) => {
         if (controller.signal.aborted) return;
         lastFailedRef.current = null;

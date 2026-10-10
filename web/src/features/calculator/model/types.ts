@@ -39,7 +39,10 @@ export type PendingCall =
       then: { type: "show" } | { type: "chain"; nextOperator: BinaryOperator };
     }
   | { kind: "sqrt"; value: string; resume: ResumePhase }
-  | { kind: "percent"; value: string; percent: string; resume: ResumePhase };
+  /** "x %" on its own: x ÷ 100. */
+  | { kind: "percent"; mode: "plain"; value: string; resume: ResumePhase }
+  /** "a + x %": x percent of the first operand a. */
+  | { kind: "percent"; mode: "ofFirst"; value: string; percent: string; resume: ResumePhase };
 
 export type CalculatorError =
   { kind: "api"; problem: Problem } | { kind: "network"; message: string };

@@ -191,6 +191,15 @@ describe("binary operations", () => {
   });
 });
 
+describe("committing operands", () => {
+  it("normalises a trailing point and negative zero", () => {
+    expect(run("0.+")).toMatchObject({ firstOperand: "0", expression: "0 +" });
+    expect(run("1.5.+2.=").pending).toMatchObject({ a: "1.5", b: "2" });
+    expect(run("5+~=").pending).toMatchObject({ a: "5", b: "0" });
+    expect(run("3.r").pending).toMatchObject({ kind: "sqrt", value: "3" });
+  });
+});
+
 describe("unary operations", () => {
   it("square root of the display", () => {
     const s = run("16r");
@@ -228,15 +237,20 @@ describe("unary operations", () => {
   it("percent on its own divides by 100", () => {
     expect(run("50%").pending).toEqual({
       kind: "percent",
+      mode: "plain",
       value: "50",
-      percent: "1",
       resume: "result",
     });
+  });
+
+  it("1 % of the first operand is not confused with a plain percentage", () => {
+    expect(run("200+1%").pending).toMatchObject({ mode: "ofFirst", value: "200", percent: "1" });
   });
 
   it("percent after + or − is a percentage of the first operand", () => {
     expect(run("200+15%").pending).toEqual({
       kind: "percent",
+      mode: "ofFirst",
       value: "200",
       percent: "15",
       resume: "enteringSecond",
@@ -247,8 +261,8 @@ describe("unary operations", () => {
   it("percent after × or ÷ divides the second operand by 100", () => {
     expect(run("200*15%").pending).toEqual({
       kind: "percent",
+      mode: "plain",
       value: "15",
-      percent: "1",
       resume: "enteringSecond",
     });
   });
@@ -291,6 +305,21 @@ describe("errors, clearing and recall", () => {
     });
     expect(failed).toMatchObject({ phase: "enteringFirst", display: "16", pending: null });
     expect(run("r", failed).pending).toMatchObject({ kind: "sqrt", value: "16" });
+  });
+
+  it("restored text after a network error is replaced, not edited", () => {
+    const offline: CalculatorEvent = {
+      type: "apiFailed",
+      error: { kind: "network", message: "offline" },
+    };
+    // A recalled "1E-17" must not become "1E-175" by typing after a failure.
+    const recalled = reduce(run("2+"), { type: "recall", value: "1E-17" });
+    const failed = reduce(run("=", recalled), offline);
+    expect(run("5", failed).display).toBe("5");
+    expect(run("<", failed).display).toBe("1E-17");
+    // After "5 + √" fails, typing starts the second operand instead of appending to "5".
+    const sqrtFailed = reduce(run("5+r"), offline);
+    expect(run("3", sqrtFailed)).toMatchObject({ phase: "enteringSecond", display: "3" });
   });
 
   it("the next successful input clears a network error", () => {
