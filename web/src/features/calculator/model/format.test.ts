@@ -35,6 +35,13 @@ describe("formatDisplay", () => {
     expect(formatDisplay("99999999999999999999")).toBe("1e+20");
     expect(formatDisplay("1" + "0".repeat(1000))).toBe("1e+1000");
   });
+
+  it("renders API results in exponent notation with a short mantissa", () => {
+    expect(formatDisplay("1E-17")).toBe("1e-17");
+    expect(formatDisplay("-1.5E-20")).toBe("-1.5e-20");
+    expect(formatDisplay("8.673617379884035E-19")).toBe("8.67361738e-19");
+    expect(formatDisplay("9.9999999999E-30")).toBe("1e-29");
+  });
 });
 
 describe("displaySize", () => {

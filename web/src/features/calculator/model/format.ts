@@ -25,18 +25,31 @@ function roundFraction(int: string, frac: string, places: number): [string, stri
   return [newInt, newFrac];
 }
 
-/** "12345678901234567890" → "1.23456789e+19" for an unsigned integer string. */
-function scientific(int: string): string {
-  let exponent = int.length - 1;
-  let mantissa = BigInt(int.slice(0, MANTISSA_DIGITS));
-  if ((int[MANTISSA_DIGITS] ?? "0") >= "5") mantissa += 1n;
+/**
+ * Scientific notation for a digit string whose first digit has the given
+ * power of ten: ("12345678901234567890", 19) → "1.23456789e+19".
+ */
+function scientific(digits: string, exponent: number): string {
+  let mantissa = BigInt(digits.slice(0, MANTISSA_DIGITS).padEnd(1, "0"));
+  if ((digits[MANTISSA_DIGITS] ?? "0") >= "5") mantissa += 1n;
   let m = mantissa.toString();
-  if (m.length > MANTISSA_DIGITS) {
-    m = m.slice(0, MANTISSA_DIGITS);
+  if (m.length > Math.min(MANTISSA_DIGITS, digits.length)) {
+    m = m.slice(0, -1);
     exponent += 1;
   }
   const fraction = m.slice(1).replace(/0+$/, "");
-  return `${m[0] ?? ""}${fraction ? `.${fraction}` : ""}e+${String(exponent)}`;
+  const sign = exponent < 0 ? "-" : "+";
+  return `${m[0] ?? "0"}${fraction ? `.${fraction}` : ""}e${sign}${String(Math.abs(exponent))}`;
+}
+
+/** "8.6736E-19" (the API's form for tiny results) → "8.6736e-19". */
+function fromExponentForm(unsigned: string): string {
+  const [mantissa = "", exp = "0"] = unsigned.split(/[eE]/);
+  const [int = "", frac = ""] = mantissa.split(".");
+  const all = int + frac;
+  const leadingZeros = all.length - all.replace(/^0+/, "").length;
+  const digits = all.slice(leadingZeros) || "0";
+  return scientific(digits, Number(exp) + int.length - 1 - leadingZeros);
 }
 
 /** Formats a raw decimal string for the display. */
@@ -45,17 +58,19 @@ export function formatDisplay(raw: string): string {
 
   const negative = raw.startsWith("-");
   const unsigned = negative ? raw.slice(1) : raw;
+  const sign = negative ? "-" : "";
+  if (/[eE]/.test(unsigned)) return sign + fromExponentForm(unsigned);
+
   const dot = unsigned.indexOf(".");
   const int = dot === -1 ? unsigned : unsigned.slice(0, dot);
   const frac = dot === -1 ? "" : unsigned.slice(dot + 1);
-  const sign = negative ? "-" : "";
 
   // Anything the user can type fits; show it verbatim (keeps "1." and "1.50").
   if (digitCount(int, frac) <= MAX_DISPLAY_DIGITS) {
     return `${sign}${groupThousands(int)}${dot === -1 ? "" : "."}${frac}`;
   }
   if (int.length > MAX_DISPLAY_DIGITS) {
-    return sign + scientific(int);
+    return sign + scientific(int, int.length - 1);
   }
   const places = MAX_DISPLAY_DIGITS - (int === "0" ? 0 : int.length);
   const [roundedInt, roundedFrac] = roundFraction(int, frac, places);
