@@ -93,7 +93,7 @@ api/
 - Arithmetic runs in a context with **34 digits of precision** (decimal128) and `RoundHalfEven`. Results are rounded to at most **16 decimal places** and trailing zeros are trimmed before formatting.
 - Operations are plain functions: `func Add(a, b Number) (Number, error)`. No interfaces.
 - Sentinel errors: `ErrInvalidNumber`, `ErrNumberTooLarge`, `ErrDivisionByZero`, `ErrNegativeSqrt`, `ErrInvalidPower` (e.g. `0^-1`, non-integer exponent on a negative base), `ErrResultTooLarge` (overflow/underflow of the context), `ErrInvalidOperation` (defensive catch-all for library conditions).
-- `0^0` is defined as `1`. The library returns NaN for it, so the domain handles it explicitly. The library also returns `Infinity` without an error for `0^-1` and accepts `NaN`/`Infinity` as input strings; the domain checks the decimal's form after every parse and operation and never lets a non-finite value out.
+- `0^0` is defined as `1`. The library returns NaN (with an error) for it, so the domain handles it explicitly. The library also returns `Infinity` without an error for `0^-1` and accepts `NaN`/`Infinity` as input strings; the domain checks the decimal's form after every parse and operation and never lets a non-finite value out.
 - `Percent(value, percent)` returns `value * percent / 100`.
 - `Power` supports integer and fractional exponents where the result is real.
 
@@ -376,3 +376,14 @@ Status badge in the README. Coverage numbers are quoted in `docs/testing.md` and
 - Server-side history or persistence.
 - Authentication, rate limiting, metrics endpoint. Mentioned in `docs/backend.md` as natural next steps.
 - Theme toggle, i18n.
+
+## 10. Revisions after review
+
+Changes made after the independent review of the backend (checkpoint 1). The code and `docs/` describe the current behaviour; this section records what moved and why.
+
+- **Input limit 64 → 34 significant digits.** Accepting 64 digits while computing at 34 rounded `+ − ×` silently. The limit now equals the working precision, so inputs are exact and only results round.
+- **Tiny results.** A non-zero result that 16-place rounding would turn into `0` is returned in exponent notation with 16 significant digits (`1E-17`).
+- **Percent** divides before multiplying, so `100 % of 1e1000` no longer overflows.
+- **Duplicate JSON keys** are rejected with `400 invalid-request` instead of last-one-wins.
+- **Panics** after a response started no longer append a 500 body; `http.ErrAbortHandler` propagates; net/http's own errors go to the JSON log.
+

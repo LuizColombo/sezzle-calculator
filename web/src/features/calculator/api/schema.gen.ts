@@ -185,9 +185,10 @@ export interface components {
     schemas: {
         /**
          * @description A decimal number as a string: optional sign, digits with an optional
-         *     decimal point, optional exponent. At most 64 significant digits,
+         *     decimal point, optional exponent. At most 34 significant digits,
          *     magnitude within 10^±1000. `NaN`, `Infinity`, whitespace and digit
-         *     separators are rejected.
+         *     separators are rejected. There is no length limit beyond the 1 KiB
+         *     request body; results can be long (`1e500 × 1e500` has 1001 digits).
          * @example 0.1
          * @example -42
          * @example 1.5e3

@@ -222,9 +222,9 @@ components:
         A decimal number as a string: optional sign, digits with an optional
         decimal point, optional exponent. At most 34 significant digits,
         magnitude within 10^±1000. `NaN`, `Infinity`, whitespace and digit
-        separators are rejected.
+        separators are rejected. There is no length limit beyond the 1 KiB
+        request body; results can be long (`1e500 × 1e500` has 1001 digits).
       pattern: '^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d{1,4})?$'
-      maxLength: 512
       examples: ["0.1", "-42", "1.5e3"]
 
     BinaryRequest:

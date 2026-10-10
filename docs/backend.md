@@ -26,11 +26,11 @@ Middleware runs outermost first:
 2. **requestID** — reuses a safe client `X-Request-ID` or generates a 64-bit random one; echoes it in the response and stores it in the context.
 3. **logRequests** — one JSON line per request: method, path, status, duration, request id.
 4. **cors** — only when `CORS_ORIGINS` is set (local development with Vite). In Docker the browser talks to nginx on the same origin, so CORS is off.
-5. **mux** — `net/http.ServeMux` with method patterns. A `route` helper also registers a fallback per path so a wrong method gets a problem+json `405` with `Allow`; anything unmatched gets a `404` problem.
+5. **mux** — `net/http.ServeMux` with method patterns. A `route` helper also registers a fallback per path so a wrong method gets a problem+json `405` with `Allow`; anything unmatched gets a `404` problem. One stdlib behaviour is kept as is: a non-canonical path such as `/api/v1//add` gets the mux's `307` redirect to the clean path.
 
 Each operation handler then:
 
-1. decodes the body: `application/json` only, at most 1 KiB, exactly the expected fields, every value a JSON string, nothing after the object;
+1. decodes the body token by token: `application/json` only, at most 1 KiB, exactly the expected fields, each once (a repeated key is rejected, not last-one-wins), every value a JSON string, nothing after the object;
 2. parses each value with `calc.Parse`;
 3. calls the operation;
 4. writes `{"operation", "inputs", "result"}` or the mapped problem.
@@ -41,7 +41,7 @@ Seven operations share one handler. The `operations` table in `internal/httpapi/
 
 - **Grammar.** `^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d{1,4})?$`. The decimal library would also accept `NaN`, `Infinity` and other spellings; the grammar rejects them first.
 - **Limits.** 34 significant digits per input (the working precision, so inputs are exact and only results round), counted without trailing zeros (so `1e70` is one digit); magnitude within 10^±1000 for inputs and results.
-- **Precision.** 34 digits, round half to even, for every operation. `String()` rounds to 16 decimal places, trims trailing zeros and never prints `-0`.
+- **Precision.** 34 significant digits, round half to even, for every operation. `String()` rounds to 16 decimal places, trims trailing zeros and never prints `-0`. A non-zero value that would round to zero is printed in exponent notation with 16 significant digits (`1E-17`) instead.
 - **Special cases.** `0 ^ 0 = 1`. `0 ^ negative` and `negative ^ fractional` are `ErrInvalidPower`. Division by any zero is `ErrDivisionByZero`. A finiteness check after every operation guarantees that no `NaN` or `Infinity` leaves the package.
 
 ## Configuration
