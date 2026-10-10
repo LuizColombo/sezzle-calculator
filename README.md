@@ -86,7 +86,7 @@ CI runs all of it on every push, including lint, type checks and a check that ge
 
 ## How AI was used
 
-Built with Claude Code: design spec and plan first, then test-driven implementation, with an independent AI reviewer at five checkpoints. The prompts, the process and every correction — including the AI's own mistakes — are in [docs/ai/](docs/ai/README.md).
+Built with Claude Code: design spec and plan first, then test-driven implementation, with an independent AI reviewer at five checkpoints. The [specs](docs/specs/) and [plans](docs/plans/) show how each phase was designed; the prompts are in [docs/prompts.md](docs/prompts.md).
 
 ## Documentation
 
