@@ -191,3 +191,31 @@ func TestDocsPageIsServed(t *testing.T) {
 		t.Fatal("docs page must reference the spec")
 	}
 }
+
+func TestRecoverRepanicsAbortHandler(t *testing.T) {
+	h := chain(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic(http.ErrAbortHandler) }),
+		recoverPanics(slog.New(slog.NewTextHandler(io.Discard, nil))))
+	defer func() {
+		if rec := recover(); rec != http.ErrAbortHandler {
+			t.Fatalf("recovered %v, want http.ErrAbortHandler to propagate", rec)
+		}
+	}()
+	get(t, h, "/x")
+	t.Fatal("expected a panic")
+}
+
+func TestRecoverDoesNotOverwriteAStartedResponse(t *testing.T) {
+	var buf bytes.Buffer
+	h := chain(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("partial"))
+		panic("late failure")
+	}), recoverPanics(slog.New(slog.NewJSONHandler(&buf, nil))))
+	rec := get(t, h, "/x")
+	if rec.Code != http.StatusOK || rec.Body.String() != "partial" {
+		t.Fatalf("got %d %q, want the original 200 response untouched", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(buf.String(), "late failure") {
+		t.Fatal("panic should still be logged")
+	}
+}

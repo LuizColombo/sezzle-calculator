@@ -20,17 +20,27 @@ func chain(h http.Handler, mws ...middleware) http.Handler {
 	return h
 }
 
-// recoverPanics converts a panic into a 500 problem and logs it.
+// recoverPanics converts a panic into a 500 problem and logs it. It lets
+// http.ErrAbortHandler through (the server uses it to abort a response on
+// purpose) and leaves a response alone once it has started.
 func recoverPanics(logger *slog.Logger) middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 			defer func() {
-				if rec := recover(); rec != nil {
-					logger.Error("panic recovered", "panic", rec, "path", r.URL.Path, "requestId", requestIDFrom(r.Context()))
+				p := recover()
+				if p == nil {
+					return
+				}
+				if p == http.ErrAbortHandler { // compared by identity, as net/http does
+					panic(p)
+				}
+				logger.Error("panic recovered", "panic", p, "path", r.URL.Path, "requestId", requestIDFrom(r.Context()))
+				if !rec.wroteHeader {
 					writeProblem(w, r, http.StatusInternalServerError, "internal-error", titles["internal-error"], "")
 				}
 			}()
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(rec, r)
 		})
 	}
 }
@@ -59,15 +69,23 @@ func newRequestID() string {
 	return hex.EncodeToString(b[:])
 }
 
-// statusRecorder captures the status code for logging.
+// statusRecorder remembers the status code and whether the response started.
 type statusRecorder struct {
 	http.ResponseWriter
-	status int
+	status      int
+	wroteHeader bool
 }
 
 func (s *statusRecorder) WriteHeader(code int) {
-	s.status = code
+	if !s.wroteHeader {
+		s.status, s.wroteHeader = code, true
+	}
 	s.ResponseWriter.WriteHeader(code)
+}
+
+func (s *statusRecorder) Write(b []byte) (int, error) {
+	s.wroteHeader = true
+	return s.ResponseWriter.Write(b)
 }
 
 // logRequests writes one structured line per request.

@@ -52,7 +52,9 @@ func main() {
 // in-flight requests for up to 10 seconds.
 func serve(ctx context.Context, ln net.Listener, cfg config, logger *slog.Logger) error {
 	srv := &http.Server{
-		Handler:           httpapi.NewHandler(logger, version, cfg.CORSOrigins),
+		Handler: httpapi.NewHandler(logger, version, cfg.CORSOrigins),
+		// Errors from net/http itself (bad requests, TLS, accept) go to the same JSON log.
+		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
