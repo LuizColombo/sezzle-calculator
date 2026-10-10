@@ -9,7 +9,7 @@ info:
     numbers, so no precision is lost to floating point on the way in or out:
     `0.1 + 0.2` is `0.3`.
 
-    Limits: inputs have at most 64 significant digits and a magnitude within
+    Limits: inputs have at most 34 significant digits and a magnitude within
     10^±1000. Arithmetic uses 34 digits of precision (decimal128) with
     round-half-even; results are rounded to at most 16 decimal places. A
     non-zero result that would round to zero is returned in exponent notation
@@ -220,7 +220,7 @@ components:
       type: string
       description: |
         A decimal number as a string: optional sign, digits with an optional
-        decimal point, optional exponent. At most 64 significant digits,
+        decimal point, optional exponent. At most 34 significant digits,
         magnitude within 10^±1000. `NaN`, `Infinity`, whitespace and digit
         separators are rejected.
       pattern: '^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d{1,4})?$'

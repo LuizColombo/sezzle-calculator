@@ -17,6 +17,6 @@ Use `github.com/cockroachdb/apd/v3` with a single context: 34 digits of precisio
 ## Consequences
 
 - `0.1 + 0.2 = 0.3`, and `√2` is `1.414213562373095` (correctly rounded) instead of float's `…0951`.
-- Inputs are bounded (64 significant digits, magnitude 10^±1000) so a request cannot ask for unbounded work.
+- Inputs are bounded (34 significant digits, magnitude 10^±1000) so a request cannot ask for unbounded work. The digit limit equals the working precision: every input is represented exactly, and results are rounded to 34 significant digits like any decimal128 system. Two 17-digit operands multiply exactly; larger products round.
 - The library accepts `NaN` and `Infinity` as input and returns non-finite values for `0^0` and `0^-1` without an error. The domain guards all of these: a strict input grammar, explicit rules for `0^0` (= 1) and `0^-1` (error), and a finiteness check after every operation.
 - Fractional powers are computed to working precision, not exactly; the 16-place rounding hides the last digits.

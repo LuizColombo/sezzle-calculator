@@ -13,7 +13,7 @@ Numbers are decimal strings: `"0.1"`, `"-42"`, `"1.5e3"`. JSON numbers are rejec
 
 | Limit | Value |
 |---|---|
-| Significant digits per input | 64 |
+| Significant digits per input | 34 (inputs are exact; results round to 34 significant digits) |
 | Magnitude of inputs and results | 10^−1000 to 10^1000 |
 | Working precision | 34 digits, round half to even |
 | Decimal places in results | at most 16, trailing zeros removed |
@@ -97,7 +97,7 @@ Branch on the fragment of `type`; show `detail` to people. **400** means the req
 
 ### number-too-large
 
-**422.** An input has more than 64 significant digits or a magnitude outside 10^±1000, e.g. `"1e1001"`.
+**422.** An input has more than 34 significant digits or a magnitude outside 10^±1000, e.g. `"1e1001"`.
 
 ### division-by-zero
 

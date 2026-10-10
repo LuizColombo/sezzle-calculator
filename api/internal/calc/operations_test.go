@@ -51,6 +51,8 @@ func TestAdd(t *testing.T) {
 		{name: "negative", a: "-5", b: "3", want: "-2"},
 		{name: "cancels to zero", a: "1.5", b: "-1.5", want: "0"},
 		{name: "large", a: "99999999999999999999", b: "1", want: "100000000000000000000"},
+		{name: "exact at the 34-digit limit", a: "1234567890123456789012345678901234", b: "1", want: "1234567890123456789012345678901235"},
+		{name: "rounds to 34 significant digits", a: "1234567890123456789012345678901234", b: "0.5", want: "1234567890123456789012345678901234"},
 		{name: "overflow", a: "9e1000", b: "9e1000", wantErr: ErrResultTooLarge},
 	})
 }
@@ -71,6 +73,7 @@ func TestMultiply(t *testing.T) {
 		{name: "trailing zeros trimmed", a: "2.50", b: "2", want: "5"},
 		{name: "negative", a: "-3", b: "3", want: "-9"},
 		{name: "by zero", a: "123.456", b: "0", want: "0"},
+		{name: "17 by 17 digits is exact", a: "12345678901234567", b: "98765432109876543", want: "1219326311370217861743636654061881"},
 		{name: "tiny product stays non-zero", a: "1e-8", b: "1e-9", want: "1E-17"},
 		{name: "overflow", a: "1e600", b: "1e600", wantErr: ErrResultTooLarge},
 	})

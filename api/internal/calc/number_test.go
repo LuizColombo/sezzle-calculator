@@ -19,7 +19,8 @@ func TestParseValid(t *testing.T) {
 		{"-3.25", "-3.25"},
 		{"1e3", "1000"},
 		{"1E-3", "0.001"},
-		{"1234567890123456789012345678901234567890", "1234567890123456789012345678901234567890"},
+		{"1234567890123456789012345678901234", "1234567890123456789012345678901234"},
+		{"1" + strings.Repeat("0", 70), "1" + strings.Repeat("0", 70)},
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
@@ -54,7 +55,8 @@ func TestParseInvalid(t *testing.T) {
 		{"e5", ErrInvalidNumber},
 		{"--1", ErrInvalidNumber},
 		{"١", ErrInvalidNumber},
-		{strings.Repeat("9", 65), ErrNumberTooLarge},
+		{strings.Repeat("9", 35), ErrNumberTooLarge},
+		{"0." + strings.Repeat("1", 35), ErrNumberTooLarge},
 		{"1e1001", ErrNumberTooLarge},
 		{"1e-1001", ErrNumberTooLarge},
 		{"1e9999", ErrNumberTooLarge},
@@ -70,9 +72,9 @@ func TestParseInvalid(t *testing.T) {
 	}
 }
 
-func TestParseAcceptsExactly64Digits(t *testing.T) {
-	if _, err := Parse(strings.Repeat("9", 64)); err != nil {
-		t.Fatalf("64 digits should be accepted: %v", err)
+func TestParseAcceptsExactly34Digits(t *testing.T) {
+	if _, err := Parse(strings.Repeat("9", 34)); err != nil {
+		t.Fatalf("34 digits should be accepted: %v", err)
 	}
 }
 
@@ -106,7 +108,7 @@ func TestStringKeepsTinyValuesNonZero(t *testing.T) {
 		{"-1.5e-20", "-1.5E-20"},
 		{"1.23456789e-900", "1.23456789E-900"},
 		{"4e-17", "4E-17"},
-		{"6e-17", "0.0000000000000001"}, // rounds up to a visible digit
+		{"6e-17", "0.0000000000000001"},  // rounds up to a visible digit
 		{"9.7e-16", "0.000000000000001"}, // rounding carries into a new digit (found by FuzzParse)
 	}
 	for _, c := range cases {

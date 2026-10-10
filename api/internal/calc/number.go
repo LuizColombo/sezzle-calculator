@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	// MaxInputDigits is the maximum number of significant digits accepted in input.
-	MaxInputDigits = 64
+	// MaxInputDigits is the maximum number of significant digits accepted in
+	// input. It equals the working precision, so every accepted input is
+	// represented exactly and only results are rounded.
+	MaxInputDigits = precision
 	// MaxExponent bounds the magnitude of inputs and results (10^±1000).
 	MaxExponent = 1000
 	// precision is the working precision of every operation (IEEE decimal128).

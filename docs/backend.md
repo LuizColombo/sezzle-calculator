@@ -40,7 +40,7 @@ Seven operations share one handler. The `operations` table in `internal/httpapi/
 ## Domain rules
 
 - **Grammar.** `^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d{1,4})?$`. The decimal library would also accept `NaN`, `Infinity` and other spellings; the grammar rejects them first.
-- **Limits.** 64 significant digits per input, counted without trailing zeros (so `1e70` is one digit); magnitude within 10^±1000 for inputs and results.
+- **Limits.** 34 significant digits per input (the working precision, so inputs are exact and only results round), counted without trailing zeros (so `1e70` is one digit); magnitude within 10^±1000 for inputs and results.
 - **Precision.** 34 digits, round half to even, for every operation. `String()` rounds to 16 decimal places, trims trailing zeros and never prints `-0`.
 - **Special cases.** `0 ^ 0 = 1`. `0 ^ negative` and `negative ^ fractional` are `ErrInvalidPower`. Division by any zero is `ErrDivisionByZero`. A finiteness check after every operation guarantees that no `NaN` or `Infinity` leaves the package.
 
