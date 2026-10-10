@@ -142,6 +142,21 @@ func TestOperationsInvalidRequests(t *testing.T) {
 	}
 }
 
+func TestInvalidRequestDetailNamesTheProblem(t *testing.T) {
+	h := newTestHandler()
+	cases := []struct{ body, want string }{
+		{`{"a":"1"}`, `missing field "b"`},
+		{`{"a":"1","b":"2","c":"3"}`, `unexpected field "c"`},
+		{`{"a":1,"b":"2"}`, `field "a" must be a string`},
+	}
+	for _, c := range cases {
+		p := decodeProblem(t, post(t, h, "/api/v1/add", c.body))
+		if !strings.Contains(p.Detail, c.want) {
+			t.Errorf("body %s: detail = %q, want it to contain %q", c.body, p.Detail, c.want)
+		}
+	}
+}
+
 func TestOperationsAcceptCharsetInContentType(t *testing.T) {
 	rec := post(t, newTestHandler(), "/api/v1/add", `{"a":"1","b":"2"}`, "Content-Type", "application/json; charset=utf-8")
 	if rec.Code != http.StatusOK {

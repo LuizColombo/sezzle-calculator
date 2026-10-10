@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"mime"
 	"net/http"
+	"slices"
 )
 
 // maxBodyBytes bounds request bodies; two 64-digit numbers fit comfortably.
@@ -34,8 +36,10 @@ func decodeInputs(w http.ResponseWriter, r *http.Request, fields []string) (map[
 	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		return nil, fmt.Errorf("%w: unexpected data after the JSON object", errInvalidRequest)
 	}
-	if len(raw) != len(fields) {
-		return nil, fmt.Errorf("%w: expected exactly the fields %q", errInvalidRequest, fields)
+	for _, key := range slices.Sorted(maps.Keys(raw)) {
+		if !slices.Contains(fields, key) {
+			return nil, fmt.Errorf("%w: unexpected field %q; allowed: %q", errInvalidRequest, key, fields)
+		}
 	}
 
 	inputs := make(map[string]string, len(fields))
