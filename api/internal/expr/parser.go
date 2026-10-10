@@ -99,7 +99,7 @@ func (p *parser) expr(rbp int) (Node, error) {
 			return nil, err
 		}
 		// "200 + 15%" means 15% of 200, as on a calculator; so does a signed
-		// "5 + −15%", which Basic mode computes as percent(5, −15).
+		// "5 + −15%", which /percent computes as percent(5, −15).
 		if rate, ok := percentRate(right); ok && (t.Kind == Plus || t.Kind == Minus) {
 			left = &PctOf{Op: t.Kind, Base: left, Rate: rate}
 		} else {
