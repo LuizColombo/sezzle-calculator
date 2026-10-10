@@ -126,6 +126,13 @@ func TestParseSyntaxErrors(t *testing.T) {
 	}
 }
 
+func TestParseErrorMessagesReadOnce(t *testing.T) {
+	_, err := Parse("(2 + 3")
+	if got, want := err.Error(), "expected ')' at column 7"; got != want {
+		t.Fatalf("Error() = %q, want %q", got, want)
+	}
+}
+
 func TestParseAcceptsMaximumDepth(t *testing.T) {
 	in := strings.Repeat("(", MaxDepth-1) + "1" + strings.Repeat(")", MaxDepth-1)
 	if _, err := Parse(in); err != nil {

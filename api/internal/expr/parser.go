@@ -122,7 +122,7 @@ func (p *parser) prefix() (Node, error) {
 			return nil, err
 		}
 		if c := p.peek(); c.Kind != RParen {
-			return nil, syntaxError(c.Column, "expected ')' to close '(' at column %d", t.Column)
+			return nil, syntaxError(c.Column, "expected ')'")
 		}
 		p.next()
 		return &Group{X: x}, nil
