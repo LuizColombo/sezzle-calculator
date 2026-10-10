@@ -146,8 +146,9 @@ func (p *parser) prefix() (Node, error) {
 // nested parses a sub-expression one level deeper, enforcing MaxDepth at
 // the token that opened the level.
 func (p *parser) nested(opener Token, rbp int) (Node, error) {
-	if p.depth >= MaxDepth-1 {
-		return nil, syntaxError(opener.Column, "expression nested deeper than %d levels", MaxDepth)
+	if p.depth >= MaxDepth {
+		return nil, syntaxError(opener.Column,
+			"more than %d levels of nesting (parentheses, prefix operators or chained ^)", MaxDepth)
 	}
 	p.depth++
 	defer func() { p.depth-- }()
@@ -178,5 +179,5 @@ func describe(t Token) string {
 	case RParen:
 		return "')'"
 	}
-	return "'" + opSymbol[t.Kind] + "'"
+	return "'" + t.Text + "'" // as typed: '*' for someone who typed '*'
 }

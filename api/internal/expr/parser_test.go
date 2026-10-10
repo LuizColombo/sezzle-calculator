@@ -108,11 +108,13 @@ func TestParseSyntaxErrors(t *testing.T) {
 		{"(2 + 3", 7, "expected ')'"},
 		{"2 + 3)", 6, "unexpected ')'"},
 		{"2 3", 3, "unexpected number"},
-		{"* 2", 1, "unexpected '×'"},
-		{"2 + * 3", 5, "unexpected '×'"},
+		{"* 2", 1, "unexpected '*'"}, // reported as typed
+		{"2 + × 3", 5, "unexpected '×'"},
 		{"()", 2, "unexpected ')'"},
 		{"%5", 1, "unexpected '%'"},
-		{strings.Repeat("(", MaxDepth) + "1" + strings.Repeat(")", MaxDepth), 32, "nested deeper than 32"},
+		{strings.Repeat("(", MaxDepth+1) + "1" + strings.Repeat(")", MaxDepth+1), 33, "more than 32 levels"},
+		{strings.Repeat("2^", MaxDepth+1) + "2", 66, "more than 32 levels"},
+		{strings.Repeat("-", MaxDepth+1) + "2", 33, "more than 32 levels"},
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
@@ -136,9 +138,16 @@ func TestParseErrorMessagesReadOnce(t *testing.T) {
 }
 
 func TestParseAcceptsMaximumDepth(t *testing.T) {
-	in := strings.Repeat("(", MaxDepth-1) + "1" + strings.Repeat(")", MaxDepth-1)
+	in := strings.Repeat("(", MaxDepth) + "1" + strings.Repeat(")", MaxDepth)
 	if _, err := Parse(in); err != nil {
-		t.Fatalf("%d levels should be accepted: %v", MaxDepth-1, err)
+		t.Fatalf("%d levels should be accepted: %v", MaxDepth, err)
+	}
+}
+
+func TestParseRejectsNumbersWithTwoPoints(t *testing.T) {
+	_, err := Parse("2 + 1.2.3")
+	if !errors.Is(err, calc.ErrInvalidNumber) || !strings.Contains(err.Error(), `"1.2.3" at column 5`) {
+		t.Fatalf("err = %v, want invalid number \"1.2.3\" at column 5", err)
 	}
 }
 

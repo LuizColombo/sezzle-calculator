@@ -45,7 +45,7 @@ var symbols = map[rune]Kind{
 func Lex(s string) ([]Token, error) {
 	runes := []rune(s)
 	if len(runes) > maxRawLength {
-		return nil, syntaxError(0, "expression longer than %d characters", maxRawLength)
+		return nil, syntaxError(0, "expression longer than %d characters including spaces", maxRawLength)
 	}
 	visible := 0
 	for _, r := range runes {
@@ -96,6 +96,11 @@ func scanNumber(runes []rune, i int) int {
 	}
 	i = digits(i)
 	if i < len(runes) && runes[i] == '.' {
+		i = digits(i + 1)
+	}
+	// Swallow further ".digits" so "1.2.3" is one invalid number, not "1.2"
+	// followed by a puzzling "unexpected number".
+	for i < len(runes) && runes[i] == '.' {
 		i = digits(i + 1)
 	}
 	if i < len(runes) && (runes[i] == 'e' || runes[i] == 'E') {

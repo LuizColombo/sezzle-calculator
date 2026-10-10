@@ -94,7 +94,7 @@ func TestLexErrors(t *testing.T) {
 		{"2 $ 3", 3, "unexpected '$' at column 3"},
 		{"2 + x", 5, "unexpected 'x'"},
 		{strings.Repeat("1", MaxLength+1), 0, "longer than 256"},
-		{"1" + strings.Repeat(" ", maxRawLength), 0, "longer than"},
+		{"1" + strings.Repeat(" ", maxRawLength), 0, "longer than 1024 characters including spaces"},
 		{strings.Repeat("1+", MaxTokens/2) + "1", 0, "more than 128 tokens"},
 	}
 	for _, c := range cases {
