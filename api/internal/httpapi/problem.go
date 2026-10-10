@@ -64,3 +64,24 @@ func problemFromError(err error) (status int, slug, detail string) {
 	}
 	return http.StatusInternalServerError, "internal-error", ""
 }
+
+// titles maps problem slugs to human-readable titles.
+var titles = map[string]string{
+	"invalid-request":      "Invalid request",
+	"invalid-number":       "Invalid number",
+	"number-too-large":     "Number too large",
+	"division-by-zero":     "Division by zero",
+	"negative-square-root": "Square root of a negative number",
+	"invalid-power":        "Invalid power",
+	"result-too-large":     "Result out of range",
+	"invalid-operation":    "Invalid operation",
+	"not-found":            "Not found",
+	"method-not-allowed":   "Method not allowed",
+	"internal-error":       "Internal server error",
+}
+
+// writeError writes the problem for a domain error.
+func writeError(w http.ResponseWriter, r *http.Request, err error) {
+	status, slug, detail := problemFromError(err)
+	writeProblem(w, r, status, slug, titles[slug], detail)
+}
