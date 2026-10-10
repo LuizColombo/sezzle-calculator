@@ -74,9 +74,11 @@ api/
 │       ├── handlers.go       binary/unary handler factories, operations list
 │       ├── problem.go        Problem type, writer, domain error → status mapping
 │       ├── middleware.go     requestID, recover, logging (slog), timeout, CORS (dev)
-│       ├── docs.go           serves openapi.yaml and the Scalar page (go:embed)
+│       ├── docs.go           serves the embedded openapi.yaml and Scalar page
 │       └── *_test.go         httptest per route
+├── embed.go                  package api: go:embed of openapi.yaml and docs.html
 ├── openapi.yaml
+├── docs.html                 Scalar bootstrap (loads the viewer from a CDN)
 ├── Dockerfile
 ├── Makefile
 ├── .golangci.yml
@@ -90,7 +92,8 @@ api/
 - `Parse` accepts: optional sign, digits, optional single decimal point, optional exponent (`1e3`). Rejects: empty, whitespace, `NaN`, `Inf`, hex, more than **64 significant digits**, exponent beyond ±1000. Never panics on any input (fuzz-tested).
 - Arithmetic runs in a context with **34 digits of precision** (decimal128) and `RoundHalfEven`. Results are rounded to at most **16 decimal places** and trailing zeros are trimmed before formatting.
 - Operations are plain functions: `func Add(a, b Number) (Number, error)`. No interfaces.
-- Sentinel errors: `ErrInvalidNumber`, `ErrNumberTooLarge`, `ErrDivisionByZero`, `ErrNegativeSqrt`, `ErrInvalidPower` (e.g. `0^-1`, non-integer exponent on a negative base), `ErrResultTooLarge` (overflow of the context).
+- Sentinel errors: `ErrInvalidNumber`, `ErrNumberTooLarge`, `ErrDivisionByZero`, `ErrNegativeSqrt`, `ErrInvalidPower` (e.g. `0^-1`, non-integer exponent on a negative base), `ErrResultTooLarge` (overflow/underflow of the context), `ErrInvalidOperation` (defensive catch-all for library conditions).
+- `0^0` is defined as `1`. The library returns NaN for it, so the domain handles it explicitly. The library also returns `Infinity` without an error for `0^-1` and accepts `NaN`/`Infinity` as input strings; the domain checks the decimal's form after every parse and operation and never lets a non-finite value out.
 - `Percent(value, percent)` returns `value * percent / 100`.
 - `Power` supports integer and fractional exponents where the result is real.
 
@@ -112,7 +115,7 @@ Base path `/api/v1`. All request/response bodies are JSON. Numbers are strings.
 | GET | `/openapi.yaml` | — | the spec |
 | GET | `/docs` | — | Scalar API reference (embedded HTML) |
 
-Success responses echo the operation: `{"operation":"add","a":"0.1","b":"0.2","result":"0.3"}`. This makes the history on the client trivial and the response self-describing.
+Success responses echo the operation and its inputs: `{"operation":"add","inputs":{"a":"0.1","b":"0.2"},"result":"0.3"}`. This makes the history on the client trivial and the response self-describing.
 
 **Errors** are always `application/problem+json`:
 
@@ -137,7 +140,8 @@ Status mapping:
 | Division by zero | 422 | `division-by-zero` |
 | Square root of a negative | 422 | `negative-square-root` |
 | Invalid power (`0^-1`, complex result) | 422 | `invalid-power` |
-| Result overflow | 422 | `result-too-large` |
+| Result overflow or underflow | 422 | `result-too-large` |
+| Any other arithmetic condition the library reports (defensive; not expected after the checks above) | 422 | `invalid-operation` |
 | Route not found / method not allowed | 404 / 405 | `not-found` / `method-not-allowed` |
 | Panic / unexpected | 500 | `internal-error` (no internal detail leaks) |
 
@@ -158,7 +162,7 @@ Field names follow the table above (`a/b`, `base/exponent`, `value`, `value/perc
 
 - `http.Server` with `ReadHeaderTimeout: 5s`, `ReadTimeout: 10s`, `WriteTimeout: 10s`, `IdleTimeout: 60s`.
 - Request bodies limited with `http.MaxBytesReader` (1 KiB).
-- Middleware order: recover → requestID → logging → timeout (5s) → CORS (only when `CORS_ORIGINS` is set) → mux.
+- Middleware order: recover → requestID → logging → CORS (only when `CORS_ORIGINS` is set) → mux. No per-request timeout middleware: every operation is sub-millisecond and `WriteTimeout` already bounds the response.
 - Logging via `log/slog`, JSON handler, one line per request: method, path, status, duration, request id.
 - Graceful shutdown on `SIGINT`/`SIGTERM` with a 10 s drain.
 - Config from environment with sane defaults: `PORT=8080`, `LOG_LEVEL=info`, `CORS_ORIGINS=` (empty = disabled). No config library.
@@ -235,6 +239,7 @@ State shape:
 Rules worth stating:
 - `2 + 3 +` evaluates `2 + 3` before accepting the second operator (chaining).
 - `=` with no second operand is a no-op.
+- `%` follows calculator convention: after `a +`/`a −` it yields `a × x / 100` (x percent of a); otherwise it yields `x / 100`. Both go through the API's `percent` endpoint. `√` always applies to the displayed value. A unary result replaces the display; the next digit starts a fresh number.
 - After `result`, typing a digit starts fresh; typing an operator uses the result as first operand.
 - `backspace` on a single digit shows `0`. Second `.` is ignored. Leading zeros collapse.
 - Display input is capped at 16 significant digits; further digits are ignored.
