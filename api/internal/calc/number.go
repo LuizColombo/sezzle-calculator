@@ -50,10 +50,14 @@ func Parse(s string) (Number, error) {
 	if _, _, err := n.d.SetString(s); err != nil || n.d.Form != apd.Finite {
 		return Number{}, fmt.Errorf("%w: %q", ErrInvalidNumber, s)
 	}
-	if n.d.NumDigits() > MaxInputDigits {
+	// Count significant digits on the reduced form: trailing zeros are not
+	// significant, so "1e70" and its 71-character plain rendering agree.
+	var reduced apd.Decimal
+	reduced.Reduce(&n.d)
+	if reduced.NumDigits() > MaxInputDigits {
 		return Number{}, fmt.Errorf("%w: more than %d significant digits", ErrNumberTooLarge, MaxInputDigits)
 	}
-	if exp := adjustedExponent(&n.d); exp > MaxExponent || exp < -MaxExponent {
+	if exp := adjustedExponent(&reduced); exp > MaxExponent || exp < -MaxExponent {
 		return Number{}, fmt.Errorf("%w: magnitude outside 10^±%d", ErrNumberTooLarge, MaxExponent)
 	}
 	return n, nil

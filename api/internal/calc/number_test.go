@@ -76,6 +76,18 @@ func TestParseAcceptsExactly64Digits(t *testing.T) {
 	}
 }
 
+// Trailing zeros are not significant: 1e70 renders as 71 characters but has
+// one significant digit, so its formatted form must parse back. Found by FuzzParse.
+func TestParseTrailingZerosAreNotSignificant(t *testing.T) {
+	n, err := Parse("1e70")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Parse(n.String()); err != nil {
+		t.Fatalf("formatted 1e70 should parse back: %v", err)
+	}
+}
+
 func TestStringRoundsTo16DecimalPlaces(t *testing.T) {
 	n, err := Parse("0.12345678901234567890")
 	if err != nil {
