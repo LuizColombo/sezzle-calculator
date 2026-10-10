@@ -1,18 +1,19 @@
-import type { BinaryOperator, CalculatorEvent } from "../model/types";
+import type { BinaryOperator } from "../model/types";
 import { Key } from "./Key";
-import { KEYS } from "./keys";
+import type { KeyDef } from "./keys";
 import styles from "./Keypad.module.css";
 
-interface KeypadProps {
-  send: (event: CalculatorEvent) => void;
-  /** The operator waiting for its second operand, shown inverted. */
-  activeOperator: BinaryOperator | null;
+interface KeypadProps<E> {
+  keys: readonly KeyDef<E>[];
+  send: (event: E) => void;
+  /** Basic mode: the operator waiting for its second operand, shown inverted. */
+  activeOperator?: BinaryOperator | null;
 }
 
-export function Keypad({ send, activeOperator }: KeypadProps) {
+export function Keypad<E>({ keys, send, activeOperator = null }: KeypadProps<E>) {
   return (
     <div className={styles.grid} role="group" aria-label="keypad">
-      {KEYS.map((def) => (
+      {keys.map((def) => (
         <Key
           key={def.id}
           def={def}

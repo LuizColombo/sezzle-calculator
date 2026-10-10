@@ -12,13 +12,17 @@ const isEditable = (target: EventTarget | null) =>
   (target instanceof HTMLElement && target.isContentEditable);
 
 /** Binds the physical keyboard to the calculator while mounted. */
-export function useKeyboard(send: (event: CalculatorEvent) => void) {
+export function useKeyboard<E = CalculatorEvent>(
+  send: (event: E) => void,
+  /** Maps KeyboardEvent.key to the active mode's event; Basic's map by default. */
+  map: (key: string) => E | null = eventForKey as (key: string) => E | null,
+) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.target instanceof HTMLButtonElement && BUTTON_KEYS.has(e.key)) return;
       if (isEditable(e.target)) return;
-      const event = eventForKey(e.key);
+      const event = map(e.key);
       if (!event) return;
       e.preventDefault();
       send(event);
@@ -27,5 +31,5 @@ export function useKeyboard(send: (event: CalculatorEvent) => void) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [send]);
+  }, [send, map]);
 }

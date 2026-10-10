@@ -3,16 +3,16 @@ import type { KeyDef } from "./keys";
 import { cx } from "./cx";
 import styles from "./Key.module.css";
 
-interface KeyProps {
-  def: KeyDef;
+interface KeyProps<E> {
+  def: KeyDef<E>;
   /** Only meaningful for operator keys: the operator waiting for its second operand. */
   active: boolean;
-  onPress: (def: KeyDef) => void;
+  onPress: (def: KeyDef<E>) => void;
 }
 
 const press = { type: "spring", stiffness: 700, damping: 30, mass: 0.6 } as const;
 
-export function Key({ def, active, onPress }: KeyProps) {
+export function Key<E>({ def, active, onPress }: KeyProps<E>) {
   const isOperator = def.operator !== undefined;
   const classes = cx(styles.key, styles[def.variant], active && styles.active);
   return (

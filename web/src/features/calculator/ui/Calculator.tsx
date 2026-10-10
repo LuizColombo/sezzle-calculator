@@ -9,6 +9,7 @@ import styles from "./Calculator.module.css";
 import { Display } from "./Display";
 import { HISTORY_PANEL_ID, HistoryPanel } from "./HistoryPanel";
 import { Keypad } from "./Keypad";
+import { BASIC_KEYS } from "./keys";
 import { StatusBanner } from "./StatusBanner";
 import { ThemeToggle } from "./ThemeToggle";
 import { useMediaQuery } from "./useMediaQuery";
@@ -83,6 +84,7 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
           />
 
           <Keypad
+            keys={BASIC_KEYS}
             send={send}
             activeOperator={state.phase === "operatorChosen" ? state.operator : null}
           />
