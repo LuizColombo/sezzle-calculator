@@ -11,11 +11,16 @@ export interface HistoryEntry {
   at: number;
 }
 
+/** The API's decimal grammar; a recalled result is sent back to the API as an operand. */
+const DECIMAL = /^-?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d{1,4})?$/;
+
+/** localStorage is user-editable, so every loaded entry is checked before it can be recalled. */
 const isEntry = (value: unknown): value is HistoryEntry =>
   typeof value === "object" &&
   value !== null &&
   typeof (value as HistoryEntry).expression === "string" &&
   typeof (value as HistoryEntry).result === "string" &&
+  DECIMAL.test((value as HistoryEntry).result) &&
   typeof (value as HistoryEntry).at === "number";
 
 function load(): HistoryEntry[] {

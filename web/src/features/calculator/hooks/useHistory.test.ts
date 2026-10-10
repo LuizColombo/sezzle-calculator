@@ -47,7 +47,12 @@ describe("useHistory", () => {
 
     window.localStorage.setItem(
       HISTORY_KEY,
-      JSON.stringify([{ expression: "1 =", result: "1", at: 1 }, { nope: true }, 42]),
+      JSON.stringify([
+        { expression: "1 =", result: "1", at: 1 },
+        { nope: true },
+        42,
+        { expression: "tampered", result: "abc", at: 2 },
+      ]),
     );
     expect(renderHook(() => useHistory()).result.current.entries).toEqual([
       { expression: "1 =", result: "1", at: 1 },
