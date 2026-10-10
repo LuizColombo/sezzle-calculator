@@ -16,7 +16,7 @@ export function Keypad({ send, activeOperator }: KeypadProps) {
         <Key
           key={def.id}
           def={def}
-          active={def.variant === "operator" && def.operator === activeOperator}
+          active={def.operator !== undefined && def.operator === activeOperator}
           onPress={(d) => {
             send(d.event);
           }}

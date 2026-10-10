@@ -37,7 +37,7 @@ describe("HistoryPanel", () => {
     render(<HistoryPanel {...props} onClear={onClear} />);
     await userEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(onClear).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: "Confirm clear history" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clear all history" }));
     expect(onClear).toHaveBeenCalled();
   });
 
@@ -48,13 +48,11 @@ describe("HistoryPanel", () => {
       act(() => {
         screen.getByRole("button", { name: "Clear" }).click();
       });
-      expect(screen.getByRole("button", { name: "Confirm clear history" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Clear all history" })).toBeInTheDocument();
       act(() => {
         vi.advanceTimersByTime(4000);
       });
-      expect(
-        screen.queryByRole("button", { name: "Confirm clear history" }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Clear all history" })).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

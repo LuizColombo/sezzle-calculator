@@ -87,6 +87,36 @@ describe("Calculator", () => {
     });
   });
 
+  it("evaluates on Enter after keys were clicked, instead of re-pressing the last key", async () => {
+    render(<Calculator />);
+    await press("1", "add", "2");
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(display()).toHaveTextContent("3");
+    });
+  });
+
+  it("shows power as the active operator", async () => {
+    render(<Calculator />);
+    await press("2", "power");
+    expect(screen.getByRole("button", { name: "power" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("announces the API's error detail in the live region", async () => {
+    render(<Calculator />);
+    await press("1", "divide", "0", "equals");
+    await waitFor(() => {
+      expect(display()).toHaveTextContent(/Error.*division by zero/);
+    });
+  });
+
+  it("returns focus to the History button when the panel closes", async () => {
+    render(<Calculator />);
+    await press("History");
+    await press("Done");
+    expect(screen.getByRole("button", { name: "History" })).toHaveFocus();
+  });
+
   it("links to the API reference", () => {
     render(<Calculator />);
     expect(screen.getByRole("link", { name: /api docs/i })).toHaveAttribute("href", "/docs");

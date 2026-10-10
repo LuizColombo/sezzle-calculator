@@ -76,7 +76,9 @@
 
 /* The chosen operator inverts until the second operand starts, as on iOS. */
 .operator.active,
-.operator.active:hover {
+.operator.active:hover,
+.function.active,
+.function.active:hover {
   background: var(--color-on-accent);
   color: var(--color-accent);
   box-shadow: inset 0 0 0 2px var(--color-accent);

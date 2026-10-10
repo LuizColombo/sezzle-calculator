@@ -13,7 +13,7 @@ interface KeyProps {
 const press = { type: "spring", stiffness: 700, damping: 30, mass: 0.6 } as const;
 
 export function Key({ def, active, onPress }: KeyProps) {
-  const isOperator = def.operator !== undefined && def.variant === "operator";
+  const isOperator = def.operator !== undefined;
   const classes = cx(styles.key, styles[def.variant], active && styles.active);
   return (
     <motion.button
@@ -25,7 +25,11 @@ export function Key({ def, active, onPress }: KeyProps) {
       aria-pressed={isOperator ? active : undefined}
       whileTap={{ scale: 0.92 }}
       transition={press}
-      onClick={() => {
+      onClick={(e) => {
+        // A pointer press must not leave focus on the key: Enter would then
+        // re-activate it instead of meaning "=". Keyboard activation (detail 0)
+        // keeps focus where the user put it.
+        if (e.detail > 0) e.currentTarget.blur();
         onPress(def);
       }}
     >

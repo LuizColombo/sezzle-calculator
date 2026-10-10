@@ -15,6 +15,8 @@ interface HistoryPanelProps {
 }
 
 const CONFIRM_MS = 4000;
+const TITLE_ID = "history-title";
+export const HISTORY_PANEL_ID = "history-panel";
 const sheet = { type: "spring", stiffness: 380, damping: 36 } as const;
 
 /** Side panel on wide screens, bottom sheet on phones. */
@@ -39,7 +41,9 @@ export function HistoryPanel({ open, entries, onRecall, onClear, onClose }: Hist
           )}
           <motion.aside
             key="panel"
-            aria-label="History"
+            id={HISTORY_PANEL_ID}
+            aria-labelledby={TITLE_ID}
+            {...(narrow ? { role: "dialog", "aria-modal": true } : {})}
             className={cx(styles.panel, narrow ? styles.sheet : styles.side)}
             initial={narrow ? { y: "100%" } : { opacity: 0, x: 24 }}
             animate={narrow ? { y: 0 } : { opacity: 1, x: 0 }}
@@ -95,7 +99,9 @@ function PanelContent({ entries, onRecall, onClear, onClose }: Omit<HistoryPanel
   return (
     <>
       <header className={styles.header}>
-        <h2 className={styles.title}>History</h2>
+        <h2 id={TITLE_ID} className={styles.title}>
+          History
+        </h2>
         <div className={styles.actions}>
           {entries.length > 0 &&
             (confirming ? (
@@ -112,7 +118,7 @@ function PanelContent({ entries, onRecall, onClear, onClose }: Omit<HistoryPanel
                 <button
                   type="button"
                   className={cx(styles.textButton, styles.danger)}
-                  aria-label="Confirm clear history"
+                  aria-label="Clear all history"
                   onClick={() => {
                     setConfirming(false);
                     onClear();

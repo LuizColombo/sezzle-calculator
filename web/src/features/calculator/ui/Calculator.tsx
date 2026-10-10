@@ -1,63 +1,56 @@
-import { useCallback, useState } from "react";
+import { motion } from "motion/react";
+import { useCallback, useRef, useState } from "react";
 import type { CallOptions } from "../api/client";
 import { useCalculator } from "../hooks/useCalculator";
 import { useKeyboard } from "../hooks/useKeyboard";
-import type { CalculatorEvent, CalculatorState } from "../model/types";
 import styles from "./Calculator.module.css";
 import { Display } from "./Display";
-import { HistoryPanel } from "./HistoryPanel";
+import { HISTORY_PANEL_ID, HistoryPanel } from "./HistoryPanel";
 import { Keypad } from "./Keypad";
 import { StatusBanner } from "./StatusBanner";
+import { useMediaQuery } from "./useMediaQuery";
 
 interface CalculatorProps {
   /** Retry tuning; tests use a single attempt. */
   tuning?: Pick<CallOptions, "attempts" | "baseDelayMs">;
 }
 
-/**
- * Key for the display's enter/exit transition: it changes when the value is
- * replaced (a result or error arrives, or the display is cleared) and stays
- * put while the user edits the current operand.
- */
-function displayAnimationKey(state: CalculatorState, clears: number): string {
-  if (state.phase === "result" || state.phase === "error") {
-    return `${state.phase}:${state.expression ?? ""}:${state.display}`;
-  }
-  return `input:${String(clears)}`;
-}
-
 export function Calculator({ tuning = {} }: CalculatorProps) {
   const { state, send, retry, history } = useCalculator(tuning);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [clears, setClears] = useState(0);
+  const historyButton = useRef<HTMLButtonElement>(null);
+  const narrow = useMediaQuery("(max-width: 720px)");
 
-  const sendEvent = useCallback(
-    (event: CalculatorEvent) => {
-      if (event.type === "allClear") setClears((n) => n + 1);
-      send(event);
-    },
-    [send],
-  );
   const closeHistory = useCallback(() => {
     setHistoryOpen(false);
+    historyButton.current?.focus();
   }, []);
 
-  useKeyboard(sendEvent);
+  useKeyboard(send);
 
   const offline = state.error?.kind === "network";
 
   return (
     <div className={styles.layout}>
-      <main className={styles.card}>
+      <motion.main
+        layout="position"
+        transition={{ type: "spring", stiffness: 380, damping: 36 }}
+        className={styles.card}
+        // On phones the history sheet covers the calculator: take it out of the
+        // tab order and the accessibility tree while the sheet is open.
+        inert={narrow && historyOpen}
+      >
         <h1 className={styles.visuallyHidden}>Sezzle Calculator</h1>
-        <nav className={styles.toolbar} aria-label="Calculator">
+        <div className={styles.toolbar}>
           <a className={styles.toolbarLink} href="/docs" target="_blank" rel="noreferrer">
             API docs
           </a>
           <button
+            ref={historyButton}
             type="button"
             className={styles.toolbarButton}
             aria-expanded={historyOpen}
+            aria-controls={HISTORY_PANEL_ID}
             onClick={() => {
               setHistoryOpen((open) => !open);
             }}
@@ -65,7 +58,7 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
             <ClockIcon />
             History
           </button>
-        </nav>
+        </div>
 
         <StatusBanner
           message={offline ? "Can’t reach the calculation service." : null}
@@ -77,20 +70,20 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
           expression={state.expression}
           pending={state.phase === "awaitingResult"}
           error={state.error}
-          animationKey={displayAnimationKey(state, clears)}
+          animationKey={String(state.replaced)}
         />
 
         <Keypad
-          send={sendEvent}
+          send={send}
           activeOperator={state.phase === "operatorChosen" ? state.operator : null}
         />
-      </main>
+      </motion.main>
 
       <HistoryPanel
         open={historyOpen}
         entries={history.entries}
         onRecall={(value) => {
-          sendEvent({ type: "recall", value });
+          send({ type: "recall", value });
         }}
         onClear={history.clear}
         onClose={closeHistory}

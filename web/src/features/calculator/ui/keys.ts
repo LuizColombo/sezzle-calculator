@@ -10,7 +10,7 @@ export interface KeyDef {
   ariaLabel: string;
   event: CalculatorEvent;
   variant: KeyVariant;
-  /** Set for binary operators so the keypad can show which one is active. */
+  /** Set for binary operators (including the function-styled xʸ) so the keypad can show which one is active. */
   operator?: BinaryOperator;
   columns?: 2;
   rows?: 2;
@@ -49,7 +49,7 @@ export const KEYS: readonly KeyDef[] = [
   operator("divide", "÷"),
 
   fn("sqrt", "√", "square root", { type: "unary", operator: "sqrt" }),
-  fn("power", "xʸ", "power", { type: "operator", operator: "power" }),
+  { ...fn("power", "xʸ", "power", { type: "operator", operator: "power" }), operator: "power" },
   fn("sign", "±", "toggle sign", { type: "toggleSign" }),
   operator("multiply", "×"),
 
