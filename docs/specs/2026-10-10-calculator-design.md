@@ -293,7 +293,7 @@ Rules worth stating:
 
 ### 5.9 Responsive
 
-Mobile-first. Below 480 px the calculator fills the viewport width; history is a bottom sheet. Above, a centred card with history as a side panel.
+Mobile-first. Up to 720 px the calculator fills the viewport; history is a bottom sheet. Above, a centred card with history as a side panel.
 
 ### 5.10 Tests
 
@@ -386,4 +386,4 @@ Changes made after the independent review of the backend (checkpoint 1). The cod
 - **Percent** divides before multiplying, so `100 % of 1e1000` no longer overflows.
 - **Duplicate JSON keys** are rejected with `400 invalid-request` instead of last-one-wins.
 - **Panics** after a response started no longer append a 500 body; `http.ErrAbortHandler` propagates; net/http's own errors go to the JSON log.
-
+- **Frontend, after checkpoints 2 and 3:** operands restored after a network failure are replaced by the next key, not edited; percent records its intent; the display animates on a `replaced` counter owned by the reducer; the phone breakpoint is 720 px (was 480); clicking a key does not keep focus on it, so Enter means `=`; the history sheet is a modal dialog on phones.

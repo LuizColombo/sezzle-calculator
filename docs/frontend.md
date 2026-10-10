@@ -83,20 +83,23 @@ Numbers stay strings all the way through. The display formatter groups digits, r
 |---|---|
 | Key press | spring scale to 0.92 and a soft flash |
 | Operator chosen | the key inverts until the second operand starts |
-| Result arrives | the old value blurs out upwards, the result rises in |
-| AC | the value blurs out |
+| Value replaced (result, chained result, error, recall, AC) | the old value blurs out upwards, the new one rises in |
 | Expression line | cross-fades when it changes |
 | Calculation in flight | the display pulses |
 | API error | the display shakes once and turns red |
-| History | slides in from the side, or springs up as a sheet |
+| History | slides in from the side while the calculator glides over, or springs up as a sheet |
 | Connection problem | a banner drops in with Retry |
+
+The reducer decides when the value was *replaced* rather than edited (a `replaced` counter in the state), and the display keys its transition on that, so typing never animates and every arriving result does once.
 
 `MotionConfig reducedMotion="user"` and the motion tokens disable all of it under `prefers-reduced-motion: reduce`.
 
 ## Accessibility and input
 
 - Every key is a real `<button>` with a spoken name (`multiply`, not `×`); the active operator has `aria-pressed`.
-- The display is an `<output>` live region, so screen readers announce results; `aria-busy` marks calculations in flight; errors use `role="alert"`.
+- The display is an `<output>` live region, so screen readers announce results and, on an API error, the problem's detail ("Error: division by zero"); `aria-busy` marks calculations in flight; the connection banner uses `role="alert"`.
+- On phones the history sheet is a modal dialog: the calculator behind it is `inert`, and closing the sheet returns focus to the History button.
+- Clicking a key does not leave focus on it, so pressing Enter afterwards means `=`; a key activated from the keyboard keeps its focus.
 - Visible `:focus-visible` rings and 44 px minimum targets.
 - Full keyboard support: digits, `.` or `,`, `+ - * x / ^`, `%`, `Enter` or `=`, `Backspace`, `Escape` for AC (`Delete` is deliberately unbound, so a reflex keystroke cannot wipe a calculation). Shortcuts with Ctrl/⌘/Alt pass through to the browser, and Enter on a focused button activates that button.
 - With history open, `Escape` closes it instead of clearing the calculator.
