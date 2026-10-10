@@ -1,6 +1,7 @@
 import type { components, paths } from "./schema.gen";
 
 export type Problem = components["schemas"]["Problem"];
+/** The response of a per-operation endpoint (add, divide, …). */
 export type ApiResponse = components["schemas"]["Response"];
 
 /** "add" | "subtract" | … — derived from the OpenAPI paths, so it cannot drift. */
@@ -15,6 +16,10 @@ export type OperationName = {
 /** The JSON body an operation expects, e.g. { base: string; exponent: string } for "power". */
 export type RequestBody<N extends OperationName> =
   paths[`/api/v1/${N}`]["post"]["requestBody"]["content"]["application/json"];
+
+/** The 200 body an operation returns: Response for add…percent, EvaluateResponse for evaluate. */
+export type ResponseBody<N extends OperationName> =
+  paths[`/api/v1/${N}`]["post"]["responses"][200]["content"]["application/json"];
 
 /** The API answered with a Problem Details body (4xx/5xx other than 502–504). */
 export class ApiError extends Error {
@@ -84,7 +89,7 @@ export async function callOperation<N extends OperationName>(
   name: N,
   inputs: RequestBody<N>,
   options: CallOptions = {},
-): Promise<ApiResponse> {
+): Promise<ResponseBody<N>> {
   const {
     signal,
     attempts = 3,
@@ -120,7 +125,7 @@ export async function callOperation<N extends OperationName>(
       continue;
     }
 
-    if (response.ok) return readResult(response);
+    if (response.ok) return (await readResult(response)) as ResponseBody<N>;
     if (RETRYABLE_STATUS.has(response.status)) {
       lastFailure = `HTTP ${String(response.status)}`;
       continue;
@@ -132,14 +137,15 @@ export async function callOperation<N extends OperationName>(
   throw new NetworkError(lastFailure);
 }
 
-async function readResult(response: Response): Promise<ApiResponse> {
+/** Every operation's 200 body has a string `result`; the rest is checked by type only. */
+async function readResult(response: Response): Promise<{ result: string }> {
   const body: unknown = await response.json().catch(() => null);
   if (
     typeof body === "object" &&
     body !== null &&
-    typeof (body as ApiResponse).result === "string"
+    typeof (body as { result?: unknown }).result === "string"
   ) {
-    return body as ApiResponse;
+    return body as { result: string };
   }
   throw new NetworkError("unexpected response body");
 }
