@@ -358,9 +358,7 @@ Status badge in the README. Coverage numbers are quoted in `docs/testing.md` and
 
 - `README.md`: what it is, screenshot/GIF, quickstart (`docker compose up`, then `make dev` alternative), three curl examples, link to `/docs`, decision table linking ADRs, link to `docs/`.
 - `docs/adr/`: `0001-stdlib-router`, `0002-decimal-arithmetic`, `0003-numbers-as-json-strings`, `0004-problem-details-errors`, `0005-layered-not-clean-architecture`, `0006-css-modules-over-tailwind`, `0007-monorepo-layout`. Format: Context / Decision / Consequences.
-- `docs/ai/README.md`: how AI was used (brainstorm → spec → plan → TDD implementation → independent agent review at four checkpoints), tools and models per phase.
-- `docs/ai/prompts.md`: curated key prompts with outcomes.
-- `docs/ai/corrections.md`: where AI suggestions were rejected or scaled down, and why.
+- `docs/prompts.md`: the prompts used, one per step.
 - `CLAUDE.md`: project conventions.
 
 ## 8. Git conventions

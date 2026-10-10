@@ -150,7 +150,7 @@ Commit: `test(web): end-to-end scientific mode`
 
 ### Task B7: Docs
 
-`frontend.md` (modes, expression model, preview), README (feature list, screenshots), `docs/ai/` (phase 2 prompts and corrections), spec §7 revisions if anything moved.
+`frontend.md` (modes, expression model, preview), README (feature list, screenshots), `docs/prompts.md` (phase 2 prompts), spec §7 revisions if anything moved.
 
 Commit: `docs: phase 2 frontend and README`
 

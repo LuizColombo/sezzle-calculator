@@ -190,7 +190,7 @@ While typing: the expression is the main line (auto-shrinking, scrolls to the en
 ## 5. Delivery
 
 - Commits: backend first (lexer → parser → evaluator → route → OpenAPI), then frontend (model → hook → keypad/mode switch → display), then e2e and docs.
-- Docs: ADR 0008 (parser choice, server-side evaluation); `api.md` (endpoint, grammar table, `invalid-expression`); `backend.md` (package, limits); `frontend.md` (modes, expression model, preview); README (feature, screenshot); `docs/ai/` (phase-2 prompts and corrections).
+- Docs: ADR 0008 (parser choice, server-side evaluation); `api.md` (endpoint, grammar table, `invalid-expression`); `backend.md` (package, limits); `frontend.md` (modes, expression model, preview); README (feature, screenshot); `docs/prompts.md` (phase 2 prompts).
 - Independent review: after the backend, after the frontend, and a final repository pass.
 - Done when: CI green, cold clone verified, tag `v2.0.0`.
 

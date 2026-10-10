@@ -2175,7 +2175,7 @@ git commit -m "docs: backend guide, API usage and ADRs 1-5"
 
 ### ✅ Checkpoint 1 — independent review (backend)
 
-Dispatch the reviewer (`code-reviewer`, `model: fable`) with: the spec path, the plan path, and "review `api/` for correctness, idiomatic Go, test quality, security of input handling, and anything that contradicts the spec". Address findings, commit fixes as `fix(api): …` or `refactor(api): …`, and record notable findings in `docs/ai/corrections.md` (created in Task 27).
+Dispatch the reviewer (`code-reviewer`, `model: fable`) with: the spec path, the plan path, and "review `api/` for correctness, idiomatic Go, test quality, security of input handling, and anything that contradicts the spec". Address findings, commit fixes as `fix(api): …` or `refactor(api): …`.
 
 ---
 
@@ -3369,7 +3369,7 @@ git commit -m "feat(web): API client with exponential backoff"
 
 ### ✅ Checkpoint 2 — independent review (frontend foundation)
 
-Message the same reviewer agent: "review `web/src/features/calculator/{model,api}` for correctness of the state machine against spec §5.2, test quality, TypeScript strictness, and the retry policy against spec §5.3". Fix, commit as `fix(web): …`, note findings for `docs/ai/corrections.md`.
+Message the same reviewer agent: "review `web/src/features/calculator/{model,api}` for correctness of the state machine against spec §5.2, test quality, TypeScript strictness, and the retry policy against spec §5.3". Fix, commit as `fix(web): …`.
 
 ---
 
@@ -4701,7 +4701,7 @@ Watch the run on GitHub. Fix anything red with `ci: …` commits. Do not continu
 6. **API in three calls** — curl for `add` (0.1+0.2), `divide` by zero (shows the problem+json), `sqrt`. Link to `docs/api.md`.
 7. **Design decisions** — a 6-row table: decision → why → ADR link (decimal, strings, problem+json, stdlib router, layered Go, CSS Modules).
 8. **Tests** — one line each for Go and web with commands and current coverage numbers, link to `docs/testing.md`.
-9. **How AI was used** — two sentences and a link to `docs/ai/README.md`.
+9. **How AI was used** — two sentences and a link to `docs/prompts.md`.
 10. **Documentation** — link to `docs/README.md`.
 No history, no filler.
 
@@ -4720,39 +4720,23 @@ git add README.md docs/
 git commit -m "docs: README, testing and deployment guides, ADR 7"
 ```
 
-### Task 27: AI usage documentation
+### Task 27: Prompts
 
 **Files:**
-- Create: `docs/ai/README.md`, `docs/ai/prompts.md`, `docs/ai/corrections.md`
+- Create: `docs/prompts.md`
 
-- [ ] **Step 1: `docs/ai/README.md`** — sections:
-- **Tooling**: Claude Code (CLI) with Anthropic models; which model was used for which phase (design and review with the most capable model, implementation with a faster one).
-- **Process**: brainstorming (what the assignment asked → what would make it stand out) → written spec (`docs/specs/`) → written plan (`docs/plans/`) → implementation task by task with TDD → independent review by a separate reviewer agent at four checkpoints → documentation written alongside each part.
-- **Division of labour**: the human set goals, constraints and taste (what "senior" means here, which extras to cut, visual direction), approved every design section, read every diff, and made the final call on each reviewer finding; the AI drafted code, tests and docs, and ran the tooling.
-- **Verification**: nothing was accepted on the AI's word; every claim was checked by running tests, lint, Docker and the browser. Link to `corrections.md`.
+- [ ] **Step 1: `docs/prompts.md`** — the prompts used, in English, one per step of the work: the brief, the architecture discussion, scope and tooling, delivery, review strategy, spec and plan, implementation. Each prompt carries the instructions and decisions of its step; no transcript.
 
-- [ ] **Step 2: `docs/ai/prompts.md`** — curated, not a transcript. For each: the phase, the prompt (quoted, trimmed), what it produced, and what changed afterwards. Include at least: the kick-off brief (goals, "senior not more features"), the request for out-of-the-box ideas, the per-op-first-then-precedence decision, the spec-writing request, the plan-writing request, one implementation task prompt, and one reviewer prompt. Prompts are in Portuguese; keep the original with a one-line English gloss each.
-
-- [ ] **Step 3: `docs/ai/corrections.md`** — table: what the AI proposed → what was decided → why. Seed it with the decisions already made during design:
-- Clean/hexagonal architecture for Go → layered packages → single-implementation interfaces add nothing at this size.
-- gorilla/mux (used in the company's own test) → stdlib router → Go 1.22+ covers it; swap is one line.
-- "All possible tests" → a pyramid with explicit targets → more tests past the pyramid are noise.
-- Exponential backoff "everywhere" → only in the browser client → nothing in the API has anything to retry.
-- `infra/` folder → Dockerfile per service → `infra/` would hold one file.
-- `documentation/` → `docs/` → the convention tools and readers expect.
-- `wget` healthcheck in compose → `-healthcheck` flag on the binary → distroless has no wget.
-Then append each checkpoint's notable reviewer findings and what was done about them.
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 2: Commit**
 
 ```bash
-git add docs/ai
-git commit -m "docs: how AI was used, prompts and corrections"
+git add docs/prompts.md
+git commit -m "docs: add the prompts used"
 ```
 
 ### ✅ Checkpoint 4 — independent review (whole repository)
 
-Message the reviewer: "review the repository as the hiring panel would: clone cold, read the README, run `docker compose up`, read the git log, skim `docs/`. Report anything confusing, anything that contradicts the docs, dead code, and the three things you would ask about in an interview." Fix, commit, update `corrections.md`, push.
+Message the reviewer: "review the repository as the hiring panel would: clone cold, read the README, run `docker compose up`, read the git log, skim `docs/`. Report anything confusing, anything that contradicts the docs, dead code, and the three things you would ask about in an interview." Fix, commit, push.
 
 ### Task 28: Final verification and hand-off
 
