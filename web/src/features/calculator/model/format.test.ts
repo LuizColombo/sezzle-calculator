@@ -44,6 +44,16 @@ describe("formatDisplay", () => {
   });
 });
 
+describe("rounding", () => {
+  it("rounds half to even, like the API", () => {
+    expect(formatDisplay("0.12345678901234565")).toBe("0.1234567890123456");
+    expect(formatDisplay("0.12345678901234535")).toBe("0.1234567890123454");
+    expect(formatDisplay("0.123456789012345651")).toBe("0.1234567890123457");
+    expect(formatDisplay("12345678905000000000")).toBe("1.23456789e+19");
+    expect(formatDisplay("12345678915000000000")).toBe("1.234567892e+19");
+  });
+});
+
 describe("displaySize", () => {
   it("shrinks as the text grows", () => {
     expect(displaySize("123")).toBe("lg");

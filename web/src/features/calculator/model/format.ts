@@ -15,11 +15,23 @@ const groupThousands = (int: string) => int.replace(/\B(?=(\d{3})+(?!\d))/g, ","
 /** Digits in the value, not counting the leading zero of "0.xxx". */
 const digitCount = (int: string, frac: string) => (int === "0" ? 0 : int.length) + frac.length;
 
-/** Rounds the unsigned decimal int.frac half-up to `places` fractional digits. */
+/**
+ * Keeps the first `keep` digits of a digit string, rounding half to even as
+ * the API does. The result can be one digit longer when rounding carries.
+ */
+function roundDigits(digits: string, keep: number): string {
+  const kept = digits.slice(0, keep);
+  const next = digits[keep] ?? "0";
+  const rest = digits.slice(keep + 1);
+  const lastIsOdd = Number(kept.at(-1) ?? "0") % 2 === 1;
+  const up = next > "5" || (next === "5" && (/[1-9]/.test(rest) || lastIsOdd));
+  const value = BigInt(kept || "0") + (up ? 1n : 0n);
+  return value.toString().padStart(kept.length, "0");
+}
+
+/** Rounds the unsigned decimal int.frac to `places` fractional digits. */
 function roundFraction(int: string, frac: string, places: number): [string, string] {
-  const kept = BigInt(int + frac.slice(0, places));
-  const roundUp = (frac[places] ?? "0") >= "5";
-  const digits = (roundUp ? kept + 1n : kept).toString().padStart(places + 1, "0");
+  const digits = roundDigits(int + frac, int.length + places).padStart(places + 1, "0");
   const newInt = digits.slice(0, digits.length - places);
   const newFrac = digits.slice(digits.length - places).replace(/0+$/, "");
   return [newInt, newFrac];
@@ -30,9 +42,7 @@ function roundFraction(int: string, frac: string, places: number): [string, stri
  * power of ten: ("12345678901234567890", 19) → "1.23456789e+19".
  */
 function scientific(digits: string, exponent: number): string {
-  let mantissa = BigInt(digits.slice(0, MANTISSA_DIGITS).padEnd(1, "0"));
-  if ((digits[MANTISSA_DIGITS] ?? "0") >= "5") mantissa += 1n;
-  let m = mantissa.toString();
+  let m = roundDigits(digits, Math.min(MANTISSA_DIGITS, digits.length) || 1);
   if (m.length > Math.min(MANTISSA_DIGITS, digits.length)) {
     m = m.slice(0, -1);
     exponent += 1;
