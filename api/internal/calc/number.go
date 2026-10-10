@@ -79,8 +79,8 @@ func (n Number) IsNegative() bool { return n.d.Negative && !n.d.IsZero() }
 // String renders the number in plain decimal notation, rounded half-even to
 // at most 16 decimal places, with trailing zeros removed and no negative zero.
 // A non-zero value that the rounding would turn into 0 is rendered in
-// exponent notation instead ("1E-17"), so a result is never reported as 0
-// when it is not. Both forms are accepted by Parse.
+// exponent notation with 16 significant digits instead ("1E-17"), so a result
+// is never reported as 0 when it is not. Both forms are accepted by Parse.
 func (n Number) String() string {
 	var d apd.Decimal
 	d.Reduce(&n.d)
@@ -100,6 +100,13 @@ func (n Number) String() string {
 			panic(fmt.Sprintf("calc: quantize %s: %v", d.String(), err)) // unreachable: precision is sized above
 		}
 		if q.IsZero() {
+			// Too small for 16 places: keep 16 significant digits instead.
+			significant := apd.BaseContext.WithPrecision(maxScale)
+			significant.Rounding = apd.RoundHalfEven
+			if _, err := significant.Round(&d, &d); err != nil {
+				panic(fmt.Sprintf("calc: round %s: %v", d.String(), err)) // unreachable: exponent is in range
+			}
+			d.Reduce(&d)
 			return d.Text('E')
 		}
 		d.Reduce(&q)
