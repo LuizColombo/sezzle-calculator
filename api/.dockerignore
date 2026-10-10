@@ -1,0 +1,7 @@
+coverage.*
+api
+Dockerfile
+.dockerignore
+.golangci.yml
+redocly.yaml
+**/testdata/fuzz
