@@ -66,7 +66,7 @@ export function Display({ value, expression, pending, error, animationKey }: Dis
           </motion.span>
         </AnimatePresence>
         {/* The detail is shown in the line above; repeat it here so it is announced. */}
-        {detail !== null && <span className={styles.visuallyHidden}>{`: ${detail}`}</span>}
+        {detail !== null && <span className="visually-hidden">{`: ${detail}`}</span>}
       </output>
     </section>
   );

@@ -41,7 +41,7 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
           // tab order and the accessibility tree while the sheet is open.
           inert={narrow && historyOpen}
         >
-          <h1 className={styles.visuallyHidden}>Sezzle Calculator</h1>
+          <h1 className="visually-hidden">Sezzle Calculator</h1>
           <div className={styles.toolbar}>
             <a className={styles.toolbarLink} href="/docs" target="_blank" rel="noreferrer">
               API docs

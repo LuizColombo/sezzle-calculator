@@ -59,15 +59,6 @@
   background: var(--color-key);
 }
 
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 /* Phones: the calculator is the whole screen. Wider: a floating card. */
 @media (min-width: 721px) {
   .layout {
