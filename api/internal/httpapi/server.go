@@ -12,6 +12,7 @@ func NewHandler(logger *slog.Logger, version string, corsOrigins []string) http.
 	for _, op := range operations {
 		route(mux, http.MethodPost, op.Path, op.handler())
 	}
+	route(mux, http.MethodPost, evaluateOperation.Path, http.HandlerFunc(evaluate))
 	route(mux, http.MethodGet, basePath+"operations", http.HandlerFunc(listOperations))
 	route(mux, http.MethodGet, "/healthz", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "version": version})

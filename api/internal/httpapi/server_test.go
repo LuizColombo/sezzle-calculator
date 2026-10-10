@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -165,7 +166,7 @@ func TestOpenAPIIsServed(t *testing.T) {
 		t.Fatalf("got %d %s", rec.Code, rec.Header().Get("Content-Type"))
 	}
 	body := rec.Body.String()
-	for _, op := range operations {
+	for _, op := range append(slices.Clone(operations), evaluateOperation) {
 		if !strings.Contains(body, op.Path+":") {
 			t.Errorf("openapi.yaml does not document %s", op.Path)
 		}

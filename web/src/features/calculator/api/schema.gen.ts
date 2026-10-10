@@ -145,6 +145,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate an expression with operator precedence
+         * @description Parses and evaluates a whole expression. Precedence, lowest to highest:
+         *     `+ −`, `× ÷`, unary `−`, `^` (right-associative), postfix `%`, `√`.
+         *     Parentheses group. `200 + 15%` is 15% of 200 added to 200, as on a
+         *     calculator; elsewhere `x%` is `x ÷ 100`. Accepts `* / -` or `× ÷ −`.
+         *
+         *     Limits: 256 characters (spaces not counted), 128 tokens, 32 levels of
+         *     nesting. A syntax error is an `invalid-expression` problem whose
+         *     `position` is the 1-based column of the mistake.
+         */
+        post: operations["evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/operations": {
         parameters: {
             query?: never;
@@ -221,6 +248,21 @@ export interface components {
             };
             result: components["schemas"]["DecimalString"];
         };
+        EvaluateRequest: {
+            /**
+             * @description An arithmetic expression, e.g. `(2 + 3) × 4`.
+             * @example 2 + 3 × 4
+             */
+            expression: string;
+        };
+        EvaluateResponse: {
+            /**
+             * @description Canonical form — normalised spacing and operator symbols, numbers and parentheses as typed.
+             * @example 2 + 3 × 4
+             */
+            expression: string;
+            result: components["schemas"]["DecimalString"];
+        };
         /** @description RFC 9457 Problem Details. */
         Problem: {
             /**
@@ -228,8 +270,8 @@ export interface components {
              * @description Identifies the problem. The fragment is one of: `invalid-request`,
              *     `invalid-number`, `number-too-large`, `division-by-zero`,
              *     `negative-square-root`, `invalid-power`, `result-too-large`,
-             *     `invalid-operation`, `not-found`, `method-not-allowed`,
-             *     `internal-error`.
+             *     `invalid-operation`, `invalid-expression`, `not-found`,
+             *     `method-not-allowed`, `internal-error`.
              */
             type: string;
             title: string;
@@ -239,6 +281,8 @@ export interface components {
             instance?: string;
             /** @description Echo of the `X-Request-ID` response header. */
             requestId?: string;
+            /** @description For `invalid-expression`, the 1-based column of the error, when it has one. */
+            position?: number;
         };
         Operation: {
             /** @example add */
@@ -276,6 +320,26 @@ export interface components {
                  *       "status": 400,
                  *       "detail": "invalid request: missing field \"b\"",
                  *       "instance": "/api/v1/add",
+                 *       "requestId": "3f9a1c2b7d4e6f80"
+                 *     }
+                 */
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description The request is malformed, or the expression is not valid syntax. */
+        BadExpression: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "type": "https://github.com/LuizColombo/sezzle-calculator/blob/main/docs/api.md#invalid-expression",
+                 *       "title": "Invalid expression",
+                 *       "status": 400,
+                 *       "detail": "unexpected ')' at column 6",
+                 *       "position": 6,
+                 *       "instance": "/api/v1/evaluate",
                  *       "requestId": "3f9a1c2b7d4e6f80"
                  *     }
                  */
@@ -598,6 +662,43 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "expression": "2 + (3 − 1) × 4^2 ÷ √16"
+                 *     }
+                 */
+                "application/json": components["schemas"]["EvaluateRequest"];
+            };
+        };
+        responses: {
+            /** @description The canonical expression and its value. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "expression": "2 + (3 − 1) × 4 ^ 2 ÷ √16",
+                     *       "result": "10"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["EvaluateResponse"];
+                };
+            };
+            400: components["responses"]["BadExpression"];
             422: components["responses"]["Unprocessable"];
         };
     };

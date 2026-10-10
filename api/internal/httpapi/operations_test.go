@@ -179,13 +179,16 @@ func TestListOperations(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &ops); err != nil {
 		t.Fatal(err)
 	}
-	if len(ops) != 7 {
-		t.Fatalf("got %d operations, want 7", len(ops))
+	if len(ops) != 8 {
+		t.Fatalf("got %d operations, want 8", len(ops))
 	}
 	if ops[0].Name != "add" || ops[0].Path != "/api/v1/add" || ops[0].Arity != 2 {
 		t.Fatalf("first op = %+v", ops[0])
 	}
 	if ops[5].Name != "sqrt" || ops[5].Arity != 1 {
 		t.Fatalf("sqrt op = %+v", ops[5])
+	}
+	if last := ops[7]; last.Name != "evaluate" || last.Path != "/api/v1/evaluate" || last.Params[0] != "expression" {
+		t.Fatalf("evaluate op = %+v", last)
 	}
 }

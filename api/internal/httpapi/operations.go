@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/LuizColombo/sezzle-calculator/api/internal/calc"
 )
@@ -77,7 +78,12 @@ func (op Operation) handler() http.HandlerFunc {
 	}
 }
 
+// evaluateOperation describes POST /api/v1/evaluate in the operations list.
+var evaluateOperation = Operation{
+	Name: "evaluate", Path: basePath + "evaluate", Arity: 1, Params: []string{"expression"},
+}
+
 // listOperations serves GET /api/v1/operations.
 func listOperations(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, operations)
+	writeJSON(w, http.StatusOK, append(slices.Clone(operations), evaluateOperation))
 }
