@@ -25,7 +25,7 @@ Middleware runs outermost first:
 1. **recoverPanics** — turns a panic into a `500 internal-error` problem and logs it with the request id.
 2. **requestID** — reuses a safe client `X-Request-ID` or generates a 64-bit random one; echoes it in the response and stores it in the context.
 3. **logRequests** — one JSON line per request: method, path, status, duration, request id.
-4. **cors** — only when `CORS_ORIGINS` is set (local development with Vite). In Docker the browser talks to nginx on the same origin, so CORS is off.
+4. **cors** — only when `CORS_ORIGINS` is set, for a frontend on another host. Docker (nginx) and local development (Vite's proxy) both keep the browser on one origin, so CORS is normally off.
 5. **mux** — `net/http.ServeMux` with method patterns. A `route` helper also registers a fallback per path so a wrong method gets a problem+json `405` with `Allow`; anything unmatched gets a `404` problem. One stdlib behaviour is kept as is: a non-canonical path such as `/api/v1//add` gets the mux's `307` redirect to the clean path.
 
 Each operation handler then:
@@ -50,7 +50,7 @@ Seven operations share one handler. The `operations` table in `internal/httpapi/
 |---|---|---|
 | `PORT` | `8080` | Listen port (1–65535). |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error`. |
-| `CORS_ORIGINS` | *(empty)* | Comma-separated allowed origins. Empty disables CORS. |
+| `CORS_ORIGINS` | *(empty)* | Comma-separated allowed origins, for a frontend served from another host. Empty disables CORS; neither Docker nor `npm run dev` needs it, because both proxy `/api` from the same origin. |
 
 The version shown by `/healthz` is set at build time: `-ldflags "-X main.version=…"`.
 

@@ -15,15 +15,15 @@ A decimal-exact calculator: a React + TypeScript frontend on a Go REST API. `0.1
 docker compose up --build
 ```
 
-Open **http://localhost:8080**. The interactive API reference is at **http://localhost:8080/docs**. If port 8080 is taken: `WEB_PORT=3000 docker compose up --build`.
+Open **http://localhost:8080**. The interactive API reference is at **http://localhost:8080/docs** (its viewer loads from a CDN; offline, the contract is at `/openapi.yaml`). If port 8080 is taken: `WEB_PORT=3000 docker compose up --build`.
 
 ### Without Docker
 
 Requires Go 1.27+ and Node 22+.
 
 ```bash
-cd api && CORS_ORIGINS=http://localhost:5173 go run ./cmd/api   # :8080
-cd web && npm install && npm run dev                            # :5173
+cd api && go run ./cmd/api              # :8080
+cd web && npm install && npm run dev   # :5173, proxies /api to :8080
 ```
 
 Or `make dev`, which runs both. `make help` lists the other targets.

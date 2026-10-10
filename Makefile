@@ -13,7 +13,7 @@ dev: ## Run the API (:8080) and Vite (:5173) natively, in parallel
 	$(MAKE) -j2 dev-api dev-web
 
 dev-api:
-	cd api && CORS_ORIGINS=http://localhost:5173 go run ./cmd/api
+	cd api && go run ./cmd/api
 
 dev-web:
 	cd web && npm run dev
