@@ -5,12 +5,19 @@ import type { CalculatorEvent } from "../model/types";
 /** Keys a focused button handles natively; intercepting them would double-fire. */
 const BUTTON_KEYS = new Set(["Enter", " "]);
 
+const isEditable = (target: EventTarget | null) =>
+  target instanceof HTMLInputElement ||
+  target instanceof HTMLTextAreaElement ||
+  target instanceof HTMLSelectElement ||
+  (target instanceof HTMLElement && target.isContentEditable);
+
 /** Binds the physical keyboard to the calculator while mounted. */
 export function useKeyboard(send: (event: CalculatorEvent) => void) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.target instanceof HTMLButtonElement && BUTTON_KEYS.has(e.key)) return;
+      if (isEditable(e.target)) return;
       const event = eventForKey(e.key);
       if (!event) return;
       e.preventDefault();

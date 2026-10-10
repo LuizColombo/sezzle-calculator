@@ -43,6 +43,18 @@ describe("useKeyboard", () => {
     button.remove();
   });
 
+  it("ignores keys typed into editable fields", () => {
+    const send = vi.fn();
+    renderHook(() => {
+      useKeyboard(send);
+    });
+    const input = document.createElement("input");
+    document.body.append(input);
+    press("7", {}, input);
+    expect(send).not.toHaveBeenCalled();
+    input.remove();
+  });
+
   it("stops listening on unmount", () => {
     const send = vi.fn();
     const { unmount } = renderHook(() => {
