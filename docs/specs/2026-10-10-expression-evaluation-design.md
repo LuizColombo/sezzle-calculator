@@ -1,7 +1,7 @@
 # Sezzle Calculator — Phase 2 Design Spec: Expressions and operator precedence
 
 **Date:** 2026-10-10
-**Status:** Approved
+**Status:** Approved; the two-mode UI (§2.1, §4.1) was later superseded by [ADR 0009](../adr/0009-one-mode.md) — one mode with precedence. The backend design stands.
 **Builds on:** [Phase 1 spec](2026-10-10-calculator-design.md) (v1.0.0). Everything there still holds unless this document says otherwise.
 
 ## 1. Goal

@@ -1,6 +1,6 @@
 # ADR 0008: A Pratt parser, evaluated on the server
 
-**Status:** Accepted · **Date:** 2026-10-10
+**Status:** Accepted · **Date:** 2026-10-10 · The two-mode UI it mentions was folded into one by [ADR 0009](0009-one-mode.md)
 
 ## Context
 
