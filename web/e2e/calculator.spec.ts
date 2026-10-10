@@ -21,8 +21,9 @@ test("adds decimals exactly through the real API", async ({ page }) => {
 
 test("reports division by zero with the API's detail", async ({ page }) => {
   await press(page, "1", "divide", "0", "equals");
-  await expect(page.getByRole("status")).toHaveText("Error");
-  await expect(page.getByText("division by zero")).toBeVisible();
+  // The live region announces the detail too; the visible line shows it under "Error".
+  await expect(page.getByRole("status")).toHaveText("Error: division by zero");
+  await expect(page.getByText("division by zero", { exact: true })).toBeVisible();
 });
 
 test("chains operations and keeps a history", async ({ page }) => {
@@ -30,9 +31,8 @@ test("chains operations and keeps a history", async ({ page }) => {
   await expect(page.getByRole("status")).toHaveText("20");
 
   await page.getByRole("button", { name: "History" }).click();
-  const entry = page
-    .getByRole("complementary", { name: "History" })
-    .getByRole("button", { name: /5 × 4 =/ });
+  // A side panel on desktop, a modal sheet on phones: same element either way.
+  const entry = page.locator("#history-panel").getByRole("button", { name: /5 × 4 =/ });
   await expect(entry).toBeVisible();
 
   await page.reload();
