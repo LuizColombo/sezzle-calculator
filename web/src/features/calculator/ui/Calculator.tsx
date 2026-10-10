@@ -3,11 +3,13 @@ import { useCallback, useRef, useState } from "react";
 import type { CallOptions } from "../api/client";
 import { useCalculator } from "../hooks/useCalculator";
 import { useKeyboard } from "../hooks/useKeyboard";
+import { useTheme } from "../hooks/useTheme";
 import styles from "./Calculator.module.css";
 import { Display } from "./Display";
 import { HISTORY_PANEL_ID, HistoryPanel } from "./HistoryPanel";
 import { Keypad } from "./Keypad";
 import { StatusBanner } from "./StatusBanner";
+import { ThemeToggle } from "./ThemeToggle";
 import { useMediaQuery } from "./useMediaQuery";
 
 interface CalculatorProps {
@@ -20,6 +22,7 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyButton = useRef<HTMLButtonElement>(null);
   const narrow = useMediaQuery("(max-width: 720px)");
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const closeHistory = useCallback(() => {
     setHistoryOpen(false);
@@ -46,19 +49,22 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
             <a className={styles.toolbarLink} href="/docs" target="_blank" rel="noreferrer">
               API docs
             </a>
-            <button
-              ref={historyButton}
-              type="button"
-              className={styles.toolbarButton}
-              aria-expanded={historyOpen}
-              aria-controls={HISTORY_PANEL_ID}
-              onClick={() => {
-                setHistoryOpen((open) => !open);
-              }}
-            >
-              <ClockIcon />
-              History
-            </button>
+            <div className={styles.toolbarActions}>
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <button
+                ref={historyButton}
+                type="button"
+                className={styles.toolbarButton}
+                aria-expanded={historyOpen}
+                aria-controls={HISTORY_PANEL_ID}
+                onClick={() => {
+                  setHistoryOpen((open) => !open);
+                }}
+              >
+                <ClockIcon />
+                History
+              </button>
+            </div>
           </div>
 
           <StatusBanner

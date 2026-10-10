@@ -61,7 +61,7 @@
 .textButton {
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   font-weight: 500;
   transition: background-color var(--motion-fast) var(--ease-standard);
 }

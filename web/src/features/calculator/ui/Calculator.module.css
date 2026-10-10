@@ -35,6 +35,12 @@
   margin-bottom: auto;
 }
 
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .toolbarLink,
 .toolbarButton {
   display: inline-flex;
@@ -45,7 +51,7 @@
   border-radius: var(--radius-pill);
   font-size: var(--text-small);
   font-weight: 500;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   text-decoration: none;
   transition: background-color var(--motion-fast) var(--ease-standard);
 }

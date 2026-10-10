@@ -117,6 +117,16 @@ describe("Calculator", () => {
     expect(screen.getByRole("button", { name: "History" })).toHaveFocus();
   });
 
+  it("switches between light and dark themes", async () => {
+    document.documentElement.dataset.theme = "light";
+    render(<Calculator />);
+    await press("Switch to dark theme");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    await press("Switch to light theme");
+    expect(document.documentElement.dataset.theme).toBe("light");
+    delete document.documentElement.dataset.theme;
+  });
+
   it("links to the API reference", () => {
     render(<Calculator />);
     expect(screen.getByRole("link", { name: /api docs/i })).toHaveAttribute("href", "/docs");
