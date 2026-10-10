@@ -23,7 +23,35 @@ const problem = (status: number, slug: string, title: string, detail: string, in
     { status, headers: { "Content-Type": "application/problem+json" } },
   );
 
+/**
+ * Expressions the scientific-mode tests evaluate. A lookup table rather than
+ * a second expression evaluator: the Go tests own parsing and precedence.
+ */
+export const EXPRESSIONS: Record<string, string> = {
+  "2 + 3": "5",
+  "2 + 3 × 4": "14",
+  "(2 + 3) × 4": "20",
+  "(2 + 3)": "5",
+  "√16 + 9": "13",
+  "2 × 40": "80",
+  "1 ÷ 3": "0.3333333333333333",
+};
+
 export const handlers = [
+  http.post("/api/v1/evaluate", async ({ request }) => {
+    const { expression } = (await request.json()) as { expression: string };
+    const result = EXPRESSIONS[expression];
+    if (result === undefined) {
+      return problem(
+        400,
+        "invalid-expression",
+        "Invalid expression",
+        `no fixture for ${expression}`,
+        "/api/v1/evaluate",
+      );
+    }
+    return HttpResponse.json({ expression, result });
+  }),
   http.post("/api/v1/:operation", async ({ params, request }) => {
     const operation = String(params.operation);
     const inputs = (await request.json()) as Inputs;
