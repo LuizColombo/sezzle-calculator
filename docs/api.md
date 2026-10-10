@@ -54,6 +54,36 @@ curl -s -X POST localhost:8080/api/v1/percent -H 'Content-Type: application/json
 | `POST /api/v1/sqrt` | `value` | `√value` |
 | `POST /api/v1/percent` | `value`, `percent` | `value × percent ÷ 100` |
 
+## Expressions
+
+`POST /api/v1/evaluate` takes a whole expression and applies operator precedence. It is what the Scientific mode uses; the endpoints above are what the Basic mode uses.
+
+```bash
+curl -s -X POST localhost:8080/api/v1/evaluate -H 'Content-Type: application/json' -d '{"expression":"2+3*4"}'
+# {"expression":"2 + 3 × 4","result":"14"}
+
+curl -s -X POST localhost:8080/api/v1/evaluate -H 'Content-Type: application/json' -d '{"expression":"2 + (3 − 1) × 4^2 / √16"}'
+# {"expression":"2 + (3 − 1) × 4 ^ 2 ÷ √16","result":"10"}
+
+curl -s -X POST localhost:8080/api/v1/evaluate -H 'Content-Type: application/json' -d '{"expression":"(2+3"}'
+# {"type":"…#invalid-expression","title":"Invalid expression","status":400,"detail":"expected ')' at column 5","position":5,…}
+```
+
+The response echoes the **canonical form**: single spaces around binary operators and typographic symbols (`× ÷ −`), with numbers and parentheses exactly as typed. It always parses back to the same expression.
+
+| Precedence (lowest first) | Operators | Associativity | Example |
+|---|---|---|---|
+| 1 | `+` `−` (or `-`) | left | `10 − 2 − 3 = 5` |
+| 2 | `×` `÷` (or `*` `/`) | left | `16 ÷ 4 ÷ 2 = 2` |
+| 3 | unary `−` `+` | prefix | `−2 ^ 2 = −4` |
+| 4 | `^` | right | `2 ^ 3 ^ 2 = 512`, `2 ^ −1 = 0.5` |
+| 5 | `%` | postfix | `50% × 8 = 4` |
+| 6 | `√` | prefix | `√16 + 9 = 13`, `√(16 + 9) = 5` |
+
+**Percent** behaves like a calculator's: when the right operand of `+` or `−` is exactly `x%`, it means x percent of the left operand (`200 + 15% = 230`). Anywhere else `x%` is `x ÷ 100` (`200 + 15% × 2 = 200.3`).
+
+**Limits:** 256 characters (spaces not counted), 128 tokens, 32 levels of nested parentheses or prefix operators; each number has the limits above. There is no implicit multiplication: write `2 × (3)`, not `2(3)`.
+
 ### Discovery and health
 
 ```bash
@@ -114,6 +144,10 @@ Branch on the fragment of `type`; show `detail` to people. **400** means the req
 ### result-too-large
 
 **422.** The result overflows or underflows 10^±1000, e.g. `1e600 × 1e600`. For `percent`, the intermediate `percent ÷ 100` must also be in range, so `percent` of `1e-1000` is rejected even when the final value would fit.
+
+### invalid-expression
+
+**400.** `POST /api/v1/evaluate` received something that is not a valid expression: an unknown character, a missing or extra parenthesis, two numbers in a row, a dangling operator, or a limit exceeded. `position` is the 1-based column of the mistake (omitted when the error has no single location, such as an expression that is too long); `detail` repeats it in words, e.g. `unexpected ')' at column 6`.
 
 ### invalid-operation
 

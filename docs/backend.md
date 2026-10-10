@@ -9,6 +9,7 @@ api/
 ├── cmd/api/              entrypoint: config, listener, graceful shutdown, -healthcheck
 ├── internal/
 │   ├── calc/             domain: Number, Parse, operations, sentinel errors
+│   ├── expr/             expressions: lexer, Pratt parser, AST, evaluator over calc
 │   └── httpapi/          transport: routes, request decoding, problem+json, middleware
 ├── embed.go              embeds openapi.yaml and docs.html into the binary
 ├── openapi.yaml          the API contract (source of the frontend's types)
@@ -43,6 +44,16 @@ Seven operations share one handler. The `operations` table in `internal/httpapi/
 - **Limits.** 34 significant digits per input (the working precision, so inputs are exact and only results round), counted without trailing zeros (so `1e70` is one digit); magnitude within 10^±1000 for inputs and results.
 - **Precision.** 34 significant digits, round half to even, for every operation. `String()` rounds to 16 decimal places, trims trailing zeros and never prints `-0`. A non-zero value that would round to zero is printed in exponent notation with 16 significant digits (`1E-17`) instead.
 - **Special cases.** `0 ^ 0 = 1`. `0 ^ negative` and `negative ^ fractional` are `ErrInvalidPower`. Division by any zero is `ErrDivisionByZero`. A finiteness check after every operation guarantees that no `NaN` or `Infinity` leaves the package.
+
+## Expressions
+
+`internal/expr` turns `"2 + 3 × 4"` into a tree and evaluates it with the same `calc` functions as the per-operation endpoints, so both give identical results and errors ([ADR 0008](adr/0008-pratt-parser.md)).
+
+- **Lexer** — code points, not bytes, so columns are right for `× ÷ − √`. Accepts ASCII and typographic spellings of every operator. Numbers are scanned here and validated by `calc.Parse`.
+- **Parser** — Pratt (precedence climbing). One table of binding powers defines precedence and associativity; `^` is right-associative by giving it a right power one below its left. A `+`/`−` whose right operand is `x%` becomes a `PctOf` node, which is how `200 + 15%` means 230.
+- **Canonical form** — `String()` on the tree. The fuzz test guarantees that it parses back and prints identically; that is why numbers are printed as typed (a plain `1E700` would be 701 characters) and the length limit ignores spaces (canonical spacing would otherwise push a valid expression past it).
+- **Limits** — 256 non-space characters, 128 tokens, 32 levels of nesting, checked before any recursion goes deeper, so a hostile `((((…` cannot exhaust the stack.
+- **Errors** — `*SyntaxError{Column, Msg}` wraps `ErrSyntax` and becomes a `400 invalid-expression` with `position`; number and arithmetic errors keep their phase-1 problem types.
 
 ## Configuration
 
