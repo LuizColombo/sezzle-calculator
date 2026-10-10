@@ -7,20 +7,20 @@ import (
 )
 
 // Add returns a + b.
-func Add(a, b Number) (Number, error) { return apply(ctx.Add, a, b) }
+func Add(a, b Number) (Number, error) { return apply(decimalCtx.Add, a, b) }
 
 // Subtract returns a - b.
-func Subtract(a, b Number) (Number, error) { return apply(ctx.Sub, a, b) }
+func Subtract(a, b Number) (Number, error) { return apply(decimalCtx.Sub, a, b) }
 
 // Multiply returns a × b.
-func Multiply(a, b Number) (Number, error) { return apply(ctx.Mul, a, b) }
+func Multiply(a, b Number) (Number, error) { return apply(decimalCtx.Mul, a, b) }
 
 // Divide returns a ÷ b. Dividing by zero is an error.
 func Divide(a, b Number) (Number, error) {
 	if b.IsZero() {
 		return Number{}, ErrDivisionByZero
 	}
-	return apply(ctx.Quo, a, b)
+	return apply(decimalCtx.Quo, a, b)
 }
 
 type binaryFunc func(d, x, y *apd.Decimal) (apd.Condition, error)
@@ -62,7 +62,7 @@ func Power(base, exponent Number) (Number, error) {
 	case base.IsNegative() && !isInteger(exponent):
 		return Number{}, fmt.Errorf("%w: negative base with a fractional exponent", ErrInvalidPower)
 	}
-	return apply(ctx.Pow, base, exponent)
+	return apply(decimalCtx.Pow, base, exponent)
 }
 
 // Sqrt returns the square root of v. Negative input is an error.
@@ -71,7 +71,7 @@ func Sqrt(v Number) (Number, error) {
 		return Number{}, ErrNegativeSqrt
 	}
 	var r Number
-	cond, err := ctx.Sqrt(&r.d, &v.d)
+	cond, err := decimalCtx.Sqrt(&r.d, &v.d)
 	return finish(r, cond, err)
 }
 
@@ -79,7 +79,7 @@ func Sqrt(v Number) (Number, error) {
 // shifts the exponent) and avoids overflowing on an in-range result such as
 // 100 % of 1e1000.
 func Percent(value, percent Number) (Number, error) {
-	fraction, err := apply(ctx.Quo, percent, hundred)
+	fraction, err := apply(decimalCtx.Quo, percent, hundred)
 	if err != nil {
 		return Number{}, err
 	}

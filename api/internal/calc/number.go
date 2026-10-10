@@ -26,8 +26,8 @@ const (
 // library would otherwise accept.
 var numberPattern = regexp.MustCompile(`^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d{1,4})?$`)
 
-// ctx is the decimal context shared by all operations.
-var ctx = newContext()
+// decimalCtx is the decimal context shared by all operations.
+var decimalCtx = newContext()
 
 func newContext() *apd.Context {
 	c := apd.BaseContext.WithPrecision(precision)
