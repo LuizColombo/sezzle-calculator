@@ -13,7 +13,6 @@ const KEYS: Partial<Record<string, CalculatorEvent>> = {
   Enter: { type: "equals" },
   "=": { type: "equals" },
   Escape: { type: "allClear" },
-  Delete: { type: "allClear" },
   Backspace: { type: "backspace" },
 };
 

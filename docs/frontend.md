@@ -98,8 +98,9 @@ Numbers stay strings all the way through. The display formatter groups digits, r
 - Every key is a real `<button>` with a spoken name (`multiply`, not `×`); the active operator has `aria-pressed`.
 - The display is an `<output>` live region, so screen readers announce results; `aria-busy` marks calculations in flight; errors use `role="alert"`.
 - Visible `:focus-visible` rings and 44 px minimum targets.
-- Full keyboard support: digits, `.` or `,`, `+ - * x / ^`, `%`, `Enter` or `=`, `Backspace`, `Escape` or `Delete` for AC. Shortcuts with Ctrl/⌘/Alt pass through to the browser, and Enter on a focused button activates that button.
+- Full keyboard support: digits, `.` or `,`, `+ - * x / ^`, `%`, `Enter` or `=`, `Backspace`, `Escape` for AC (`Delete` is deliberately unbound, so a reflex keystroke cannot wipe a calculation). Shortcuts with Ctrl/⌘/Alt pass through to the browser, and Enter on a focused button activates that button.
 - With history open, `Escape` closes it instead of clearing the calculator.
+- Keys typed into an editable field are left alone.
 
 ## Running and testing
 

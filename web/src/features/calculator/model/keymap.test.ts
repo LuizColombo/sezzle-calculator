@@ -17,13 +17,12 @@ describe("eventForKey", () => {
     ["Enter", { type: "equals" }],
     ["=", { type: "equals" }],
     ["Escape", { type: "allClear" }],
-    ["Delete", { type: "allClear" }],
     ["Backspace", { type: "backspace" }],
   ])("maps %s", (key, event) => {
     expect(eventForKey(key)).toEqual(event);
   });
 
-  it.each(["a", "Shift", "Tab", " ", "ArrowLeft", "F5", "77"])("ignores %j", (key) => {
+  it.each(["a", "Shift", "Tab", " ", "ArrowLeft", "F5", "77", "Delete"])("ignores %j", (key) => {
     expect(eventForKey(key)).toBeNull();
   });
 });
