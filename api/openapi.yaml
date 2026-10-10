@@ -1,0 +1,342 @@
+openapi: 3.1.0
+info:
+  title: Sezzle Calculator API
+  version: 1.0.0
+  summary: Decimal-exact calculator operations over HTTP.
+  description: |
+    Every operation is a `POST` with a JSON object of **decimal strings** and
+    returns the result as a decimal string. Numbers are strings, not JSON
+    numbers, so no precision is lost to floating point on the way in or out:
+    `0.1 + 0.2` is `0.3`.
+
+    Limits: inputs have at most 64 significant digits and a magnitude within
+    10^±1000. Arithmetic uses 34 digits of precision (decimal128) with
+    round-half-even; results are rounded to at most 16 decimal places.
+
+    Errors use [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457)
+    (`application/problem+json`). The `type` URI points to the matching
+    section of `docs/api.md`.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /
+# The API is public: no authentication (see docs/backend.md, "Next steps").
+security: []
+tags:
+  - name: Operations
+    description: Calculator operations.
+  - name: Meta
+    description: Discovery and health.
+
+paths:
+  /api/v1/add:
+    post:
+      tags: [Operations]
+      operationId: add
+      summary: Add two numbers
+      description: Returns `a + b`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BinaryRequest" }
+            example: { a: "0.1", b: "0.2" }
+      responses:
+        "200":
+          description: The sum.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: add, inputs: { a: "0.1", b: "0.2" }, result: "0.3" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/subtract:
+    post:
+      tags: [Operations]
+      operationId: subtract
+      summary: Subtract two numbers
+      description: Returns `a - b`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BinaryRequest" }
+            example: { a: "5", b: "7" }
+      responses:
+        "200":
+          description: The difference.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: subtract, inputs: { a: "5", b: "7" }, result: "-2" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/multiply:
+    post:
+      tags: [Operations]
+      operationId: multiply
+      summary: Multiply two numbers
+      description: Returns `a × b`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BinaryRequest" }
+            example: { a: "1.5", b: "2" }
+      responses:
+        "200":
+          description: The product.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: multiply, inputs: { a: "1.5", b: "2" }, result: "3" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/divide:
+    post:
+      tags: [Operations]
+      operationId: divide
+      summary: Divide two numbers
+      description: Returns `a ÷ b`. Dividing by zero is a `division-by-zero` problem.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BinaryRequest" }
+            example: { a: "1", b: "8" }
+      responses:
+        "200":
+          description: The quotient.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: divide, inputs: { a: "1", b: "8" }, result: "0.125" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/power:
+    post:
+      tags: [Operations]
+      operationId: power
+      summary: Raise a number to a power
+      description: |
+        Returns `base ^ exponent`. `0 ^ 0` is `1`. Zero to a negative power and a
+        negative base with a fractional exponent are `invalid-power` problems.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PowerRequest" }
+            example: { base: "2", exponent: "10" }
+      responses:
+        "200":
+          description: The power.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: power, inputs: { base: "2", exponent: "10" }, result: "1024" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/sqrt:
+    post:
+      tags: [Operations]
+      operationId: sqrt
+      summary: Square root
+      description: Returns `√value`. A negative value is a `negative-square-root` problem.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnaryRequest" }
+            example: { value: "16" }
+      responses:
+        "200":
+          description: The square root.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: sqrt, inputs: { value: "16" }, result: "4" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/percent:
+    post:
+      tags: [Operations]
+      operationId: percent
+      summary: Percentage of a number
+      description: Returns `value × percent ÷ 100`, i.e. `percent`% of `value`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PercentRequest" }
+            example: { value: "200", percent: "15" }
+      responses:
+        "200":
+          description: The percentage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Response" }
+              example: { operation: percent, inputs: { value: "200", percent: "15" }, result: "30" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+
+  /api/v1/operations:
+    get:
+      tags: [Meta]
+      operationId: listOperations
+      summary: List the available operations
+      responses:
+        "200":
+          description: Every operation with its path and parameter names.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Operation" }
+
+  /healthz:
+    get:
+      tags: [Meta]
+      operationId: health
+      summary: Liveness probe
+      responses:
+        "200":
+          description: The service is up.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+
+components:
+  schemas:
+    DecimalString:
+      type: string
+      description: |
+        A decimal number as a string: optional sign, digits with an optional
+        decimal point, optional exponent. At most 64 significant digits,
+        magnitude within 10^±1000. `NaN`, `Infinity`, whitespace and digit
+        separators are rejected.
+      pattern: '^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d{1,4})?$'
+      maxLength: 512
+      examples: ["0.1", "-42", "1.5e3"]
+
+    BinaryRequest:
+      type: object
+      additionalProperties: false
+      required: [a, b]
+      properties:
+        a: { $ref: "#/components/schemas/DecimalString" }
+        b: { $ref: "#/components/schemas/DecimalString" }
+
+    PowerRequest:
+      type: object
+      additionalProperties: false
+      required: [base, exponent]
+      properties:
+        base: { $ref: "#/components/schemas/DecimalString" }
+        exponent: { $ref: "#/components/schemas/DecimalString" }
+
+    UnaryRequest:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: { $ref: "#/components/schemas/DecimalString" }
+
+    PercentRequest:
+      type: object
+      additionalProperties: false
+      required: [value, percent]
+      properties:
+        value: { $ref: "#/components/schemas/DecimalString" }
+        percent: { $ref: "#/components/schemas/DecimalString" }
+
+    Response:
+      type: object
+      required: [operation, inputs, result]
+      properties:
+        operation:
+          type: string
+          description: Name of the operation that ran.
+          examples: [add]
+        inputs:
+          type: object
+          description: The inputs exactly as received.
+          additionalProperties: { type: string }
+        result:
+          $ref: "#/components/schemas/DecimalString"
+
+    Problem:
+      type: object
+      description: RFC 9457 Problem Details.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            Identifies the problem. The fragment is one of: `invalid-request`,
+            `invalid-number`, `number-too-large`, `division-by-zero`,
+            `negative-square-root`, `invalid-power`, `result-too-large`,
+            `invalid-operation`, `not-found`, `method-not-allowed`,
+            `internal-error`.
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance:
+          type: string
+          description: The request path.
+        requestId:
+          type: string
+          description: Echo of the `X-Request-ID` response header.
+
+    Operation:
+      type: object
+      required: [name, path, arity, params]
+      properties:
+        name: { type: string, examples: [add] }
+        path: { type: string, examples: [/api/v1/add] }
+        arity: { type: integer, examples: [2] }
+        params:
+          type: array
+          items: { type: string }
+          examples: [[a, b]]
+
+    Health:
+      type: object
+      required: [status, version]
+      properties:
+        status: { type: string, examples: [ok] }
+        version: { type: string, examples: [dev] }
+
+  responses:
+    BadRequest:
+      description: The request is malformed or a value is not a decimal string.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          example:
+            type: https://github.com/LuizColombo/sezzle-calculator/blob/main/docs/api.md#invalid-request
+            title: Invalid request
+            status: 400
+            detail: 'invalid request: missing field "b"'
+            instance: /api/v1/add
+            requestId: 3f9a1c2b7d4e6f80
+
+    Unprocessable:
+      description: The request is well-formed but the operation is impossible or out of range.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          example:
+            type: https://github.com/LuizColombo/sezzle-calculator/blob/main/docs/api.md#division-by-zero
+            title: Division by zero
+            status: 422
+            detail: division by zero
+            instance: /api/v1/divide
+            requestId: 3f9a1c2b7d4e6f80

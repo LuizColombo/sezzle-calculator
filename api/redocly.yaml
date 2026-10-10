@@ -1,0 +1,5 @@
+extends:
+  - recommended
+rules:
+  # GET /api/v1/operations and GET /healthz take no input, so they have no 4xx.
+  operation-4xx-response: off

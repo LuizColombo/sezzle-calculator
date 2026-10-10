@@ -158,3 +158,36 @@ func TestCORSPreflightAndAllowedOrigin(t *testing.T) {
 		t.Fatal("unknown origin must not be allowed")
 	}
 }
+
+func TestOpenAPIIsServed(t *testing.T) {
+	rec := get(t, newTestHandler(), "/openapi.yaml")
+	if rec.Code != http.StatusOK || !strings.HasPrefix(rec.Header().Get("Content-Type"), "application/yaml") {
+		t.Fatalf("got %d %s", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	body := rec.Body.String()
+	for _, op := range operations {
+		if !strings.Contains(body, op.Path+":") {
+			t.Errorf("openapi.yaml does not document %s", op.Path)
+		}
+		for _, param := range op.Params {
+			if !strings.Contains(body, param+":") {
+				t.Errorf("openapi.yaml does not mention parameter %q of %s", param, op.Name)
+			}
+		}
+	}
+	for slug := range titles {
+		if !strings.Contains(body, slug) {
+			t.Errorf("openapi.yaml does not mention problem type %q", slug)
+		}
+	}
+}
+
+func TestDocsPageIsServed(t *testing.T) {
+	rec := get(t, newTestHandler(), "/docs")
+	if rec.Code != http.StatusOK || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") {
+		t.Fatalf("got %d %s", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	if !strings.Contains(rec.Body.String(), "/openapi.yaml") {
+		t.Fatal("docs page must reference the spec")
+	}
+}

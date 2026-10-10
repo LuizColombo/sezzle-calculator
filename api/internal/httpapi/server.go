@@ -16,6 +16,7 @@ func NewHandler(logger *slog.Logger, version string, corsOrigins []string) http.
 	route(mux, http.MethodGet, "/healthz", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "version": version})
 	}))
+	registerDocs(mux)
 	mux.HandleFunc("/", notFound)
 
 	return chain(mux,
