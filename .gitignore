@@ -2,7 +2,7 @@
 api/api
 api/coverage.out
 api/coverage.html
-api/testdata/fuzz/**/[0-9a-f]*
+api/**/testdata/fuzz/
 
 # Node
 web/node_modules/
