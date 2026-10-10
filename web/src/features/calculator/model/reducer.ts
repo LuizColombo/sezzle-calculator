@@ -26,7 +26,17 @@ export const initialState: CalculatorState = {
   fresh: true,
   pending: null,
   error: null,
+  replaced: 0,
 };
+
+/** A fresh state that keeps the replacement counter, optionally advancing it. */
+function reset(
+  state: CalculatorState,
+  replace: boolean,
+  overrides: Partial<CalculatorState>,
+): CalculatorState {
+  return { ...initialState, replaced: state.replaced + (replace ? 1 : 0), ...overrides };
+}
 
 export function reduce(state: CalculatorState, event: CalculatorEvent): CalculatorState {
   if (state.phase === "awaitingResult") {
@@ -36,7 +46,7 @@ export function reduce(state: CalculatorState, event: CalculatorEvent): Calculat
       case "apiFailed":
         return onFailure(state, event.error);
       case "allClear":
-        return initialState;
+        return reset(state, true, {});
       default:
         return state;
     }
@@ -60,7 +70,7 @@ export function reduce(state: CalculatorState, event: CalculatorEvent): Calculat
     case "recall":
       return onRecall(state, event.value);
     case "allClear":
-      return initialState;
+      return reset(state, true, {});
     case "resultReceived":
     case "apiFailed":
       return state; // a stray response after the user moved on
@@ -80,7 +90,7 @@ function beginOperand(state: CalculatorState, display: string): CalculatorState 
   if (state.phase === "operatorChosen" || (state.phase === "enteringSecond" && state.fresh)) {
     return { ...state, phase: "enteringSecond", display, fresh: false, error: null };
   }
-  return { ...initialState, phase: "enteringFirst", display, fresh: false };
+  return reset(state, false, { phase: "enteringFirst", display, fresh: false });
 }
 
 function onDigit(state: CalculatorState, digit: string): CalculatorState {
@@ -198,9 +208,16 @@ function onUnary(state: CalculatorState, operator: UnaryOperator): CalculatorSta
 
 function onRecall(state: CalculatorState, value: string): CalculatorState {
   if (state.phase === "operatorChosen" || state.phase === "enteringSecond") {
-    return { ...state, phase: "enteringSecond", display: value, fresh: true, error: null };
+    return {
+      ...state,
+      phase: "enteringSecond",
+      display: value,
+      fresh: true,
+      error: null,
+      replaced: state.replaced + 1,
+    };
   }
-  return { ...initialState, phase: "result", display: value };
+  return reset(state, true, { phase: "result", display: value });
 }
 
 // ── responses ─────────────────────────────────────────────────────────────
@@ -219,21 +236,19 @@ function onResult(state: CalculatorState, result: string): CalculatorState {
   if (pending.kind === "binary") {
     if (pending.then.type === "chain") {
       const op = pending.then.nextOperator;
-      return {
-        ...initialState,
+      return reset(state, true, {
         phase: "operatorChosen",
         display: result,
         firstOperand: result,
         operator: op,
         expression: describe(result, op),
-      };
+      });
     }
-    return {
-      ...initialState,
+    return reset(state, true, {
       phase: "result",
       display: result,
       expression: `${describe(pending.a, pending.operator, pending.b)} =`,
-    };
+    });
   }
 
   if (pending.resume === "enteringSecond") {
@@ -244,20 +259,20 @@ function onResult(state: CalculatorState, result: string): CalculatorState {
       expression: secondOperandExpression(state),
       fresh: true,
       pending: null,
+      replaced: state.replaced + 1,
     };
   }
-  return { ...initialState, phase: "result", display: result, expression: state.expression };
+  return reset(state, true, { phase: "result", display: result, expression: state.expression });
 }
 
 function onFailure(state: CalculatorState, error: CalculatorError): CalculatorState {
   if (error.kind === "api") {
-    return {
-      ...initialState,
+    return reset(state, true, {
       phase: "error",
       display: "Error",
       expression: state.expression,
       error,
-    };
+    });
   }
 
   // Network failure: restore the operands so the same key retries.

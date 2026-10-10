@@ -160,6 +160,7 @@ describe("binary operations", () => {
       phase: "result",
       display: "5",
       expression: "2 + 3 =",
+      replaced: 1,
     });
   });
 
@@ -188,6 +189,36 @@ describe("binary operations", () => {
   it("toggling the sign of a result keeps it usable as an operand", () => {
     const result = received(run("2+3="), "5");
     expect(run("~+", result)).toMatchObject({ firstOperand: "-5", phase: "operatorChosen" });
+  });
+});
+
+describe("display replacement counter", () => {
+  // The UI animates the display when `replaced` changes, so it must change
+  // exactly when the value is replaced rather than edited.
+  const replacedAfter = (script: string, from = initialState) => run(script, from).replaced;
+
+  it("does not change while typing or choosing an operator", () => {
+    expect(replacedAfter("12.5<~")).toBe(0);
+    expect(replacedAfter("12+3")).toBe(0);
+  });
+
+  it("changes when a result, a chain result or a resumed unary result arrives", () => {
+    expect(received(run("2+3="), "5").replaced).toBe(1);
+    expect(received(run("2+3*"), "5").replaced).toBe(1);
+    expect(received(run("2+16r"), "4").replaced).toBe(1);
+  });
+
+  it("does not change when an operator follows a result or a digit starts over", () => {
+    const result = received(run("2+3="), "5");
+    expect(replacedAfter("*", result)).toBe(1);
+    expect(replacedAfter("7", result)).toBe(1);
+  });
+
+  it("changes on an API error, all clear and recall", () => {
+    const error = reduce(run("1/0="), divisionByZero);
+    expect(error.replaced).toBe(1);
+    expect(replacedAfter("C", error)).toBe(2);
+    expect(reduce(run("2+"), { type: "recall", value: "4" }).replaced).toBe(1);
   });
 });
 
@@ -331,8 +362,8 @@ describe("errors, clearing and recall", () => {
   });
 
   it("all clear resets everything, even while awaiting a result", () => {
-    expect(run("12+3C")).toEqual(initialState);
-    expect(run("12+3=C")).toEqual(initialState);
+    expect(run("12+3C")).toEqual({ ...initialState, replaced: 1 });
+    expect(run("12+3=C")).toEqual({ ...initialState, replaced: 1 });
   });
 
   it("stray results are ignored", () => {

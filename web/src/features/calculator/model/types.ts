@@ -59,6 +59,12 @@ export interface CalculatorState {
   fresh: boolean;
   pending: PendingCall | null;
   error: CalculatorError | null;
+  /**
+   * Counts the times the display value was replaced rather than edited (a
+   * result or error arrived, a value was recalled, AC). The UI keys its
+   * display transition on it.
+   */
+  replaced: number;
 }
 
 export type CalculatorEvent =
