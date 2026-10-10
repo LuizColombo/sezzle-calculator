@@ -5,8 +5,9 @@ A decimal-exact calculator: a React + TypeScript frontend on a Go REST API. `0.1
 [![CI](https://github.com/LuizColombo/sezzle-calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/LuizColombo/sezzle-calculator/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="docs/assets/desktop-light.png" alt="Calculator with the history panel open, light theme" width="62%">
-  <img src="docs/assets/mobile-light.png" alt="Calculator on a phone" width="19%">
+  <img src="docs/assets/desktop-light.png" alt="2 + 3 × 4 being typed with a live preview of 14, history panel open, light theme" width="60%">
+  <img src="docs/assets/mobile-light.png" alt="An expression with parentheses on a phone" width="18.5%">
+  <img src="docs/assets/desktop-dark.png" alt="The result 20 for (2 + 3) × 4, dark theme" width="60%">
 </p>
 
 ## Quickstart
@@ -32,7 +33,7 @@ Or `make dev`, which runs both. `make help` lists the other targets.
 
 - **Operations:** add, subtract, multiply, divide, power, square root, percentage — every required and optional one.
 - **Decimal arithmetic** with 34 significant digits, never binary floats ([why](docs/adr/0002-decimal-arithmetic.md)).
-- **Two modes.** *Basic* evaluates as you type, like a phone calculator (`2 + 3 × 4` = 20, `200 + 15 %` = 230, ± and √ on either operand). *Scientific* applies operator precedence and parentheses (`2 + 3 × 4` = 14, `(2 + 3) × 4` = 20) with a live preview while you type, evaluated by the server's own parser so both modes use the same decimal arithmetic.
+- **Operator precedence and parentheses:** `2 + 3 × 4` is 14, `(2 + 3) × 4` is 20, `2 ^ 3 ^ 2` is 512, `200 + 15%` is 230 — evaluated by the server's own expression parser, with a **live preview** of the result while you type.
 - **History** of the last 50 results, persisted locally; click one to reuse it.
 - **Errors explained:** division by zero, out-of-range numbers and invalid input come back as RFC 9457 Problem Details and are shown in place. Network failures retry with exponential backoff, then offer a Retry.
 - **Light and dark themes** with a toggle (it follows the system until you choose), every colour pair checked against WCAG contrast in CI, motion that respects reduced-motion settings, screen-reader labels, and a phone layout.
@@ -65,18 +66,19 @@ Numbers are JSON **strings** so no precision is lost on the wire. Every endpoint
 | Go standard library router | Go 1.22 covers method routing; gorilla/mux would be a one-line swap. | [ADR 1](docs/adr/0001-stdlib-router.md) |
 | Two layered packages, not clean architecture | Interfaces with a single implementation add indirection, not testability. | [ADR 5](docs/adr/0005-layered-not-clean-architecture.md) |
 | OpenAPI as the source of truth | Frontend types are generated from it; CI fails on drift. | [frontend.md](docs/frontend.md#talking-to-the-api) |
-| A pure state machine for the calculator | All behaviour is testable without React or a network. | [frontend.md](docs/frontend.md#the-state-machine) |
+| A pure state machine over expression tokens | Every input rule is testable without React or a network. | [frontend.md](docs/frontend.md#the-calculator-model) |
 | CSS Modules on design tokens | A small bespoke design system reads best as one token sheet. | [ADR 6](docs/adr/0006-css-modules-over-tailwind.md) |
-| Pratt parser on the server for precedence | One table of binding powers; one implementation of decimal arithmetic for both modes. | [ADR 8](docs/adr/0008-pratt-parser.md) |
+| Pratt parser on the server for precedence | One table of binding powers; the same decimal arithmetic as every other endpoint. | [ADR 8](docs/adr/0008-pratt-parser.md) |
+| One mode, not Basic + Scientific | Two modes that answer the same keys differently confuse more than they help. | [ADR 9](docs/adr/0009-one-mode.md) |
 
-**Assumptions.** Basic mode evaluates as typed, left to right; Scientific mode sends the whole expression to `POST /api/v1/evaluate` (a Pratt parser, [ADR 8](docs/adr/0008-pratt-parser.md)). Results are rounded to 16 decimal places (tiny non-zero results switch to exponent notation rather than showing `0`). History is per browser; there is no server-side state or authentication.
+**Assumptions.** The UI sends the whole expression to `POST /api/v1/evaluate`; the per-operation endpoints (`/add` … `/percent`) are the API's building blocks, documented and tested, and the evaluator uses the same arithmetic. There is no `±` key: `−` typed where a number is expected is a sign. Results are rounded to 16 decimal places (tiny non-zero results switch to exponent notation rather than showing `0`). History is per browser; there is no server-side state or authentication.
 
 ## Tests
 
 | | Command | |
 |---|---|---|
-| Go unit + HTTP | `cd api && go test -race -cover ./...` | 91 % domain, 99 % HTTP |
-| Go fuzzing | `cd api && make fuzz` | found two real bugs |
+| Go unit + HTTP | `cd api && go test -race -cover ./...` | 91 % arithmetic, 96 % expressions, 99 % HTTP |
+| Go fuzzing | `cd api && make fuzz` | two fuzzers; found three real bugs |
 | Frontend | `cd web && npm run test:coverage` | 95 % statements |
 | End to end | `docker compose up -d --wait && cd web && npm run e2e` | desktop and phone |
 
@@ -84,8 +86,10 @@ CI runs all of it on every push, including lint, type checks and a check that ge
 
 ## How AI was used
 
-Built with Claude Code: design spec and plan first, then test-driven implementation, with an independent AI reviewer at four checkpoints. The prompts, the process and every correction — including the AI's own mistakes — are in [docs/ai/](docs/ai/README.md).
+Built with Claude Code: design spec and plan first, then test-driven implementation, with an independent AI reviewer at five checkpoints. The prompts, the process and every correction — including the AI's own mistakes — are in [docs/ai/](docs/ai/README.md).
 
 ## Documentation
 
-[docs/](docs/README.md) — API usage, backend and frontend guides, testing, deployment, architecture decision records, the design spec and the implementation plan.
+[docs/](docs/README.md) — API usage, backend and frontend guides, testing, deployment, architecture decision records, the design specs and the implementation plans.
+
+**Versions.** [`v1.0.0`](https://github.com/LuizColombo/sezzle-calculator/tree/v1.0.0) evaluated as you typed; [`v2.0.0`](https://github.com/LuizColombo/sezzle-calculator/tree/v2.0.0) added operator precedence as a second mode; `v3.0.0` keeps one mode with precedence ([ADR 9](docs/adr/0009-one-mode.md)).
