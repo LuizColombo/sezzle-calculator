@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Versioned so a future change of shape can ignore old data instead of crashing. */
 export const HISTORY_KEY = "sezzle-calculator.history.v1";
@@ -45,8 +45,11 @@ function save(entries: HistoryEntry[]) {
 export function useHistory() {
   const [entries, setEntries] = useState<HistoryEntry[]>(load);
 
+  // Persist changes, but not the initial load: re-writing what was just read
+  // would clobber a newer history saved by another tab.
+  const loaded = useRef(entries);
   useEffect(() => {
-    save(entries);
+    if (entries !== loaded.current) save(entries);
   }, [entries]);
 
   const add = useCallback((entry: Omit<HistoryEntry, "at">) => {
