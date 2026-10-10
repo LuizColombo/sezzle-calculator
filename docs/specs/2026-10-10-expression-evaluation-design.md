@@ -198,3 +198,13 @@ While typing: the expression is the main line (auto-shrinking, scrolls to the en
 
 - Implicit multiplication on the server, functions beyond `√` (sin, log…), variables, memory keys (M+, MR).
 - Server-side history.
+
+## 7. Revisions
+
+Changes made during implementation and review; the code and `docs/` describe the current behaviour.
+
+- **Numbers in the canonical form are printed as typed**, and the 256-character limit **counts non-space characters**. Both found by `FuzzParse`: rendering `1E700` through `calc` produced 701 digits, and canonical spacing could push an accepted expression past the limit, so the echoed expression could be rejected when sent back.
+- **A signed percentage is still percent-of:** `5 + −15%` is 4.25, as in Basic mode (review E1).
+- **Depth:** exactly 32 levels are accepted (the first version accepted 31); chained `^` and prefix signs count, and the message says so (review E2).
+- **Invalid numbers carry `position`** as well as syntax errors (review E6). `1.2.3` is reported as one invalid number.
+

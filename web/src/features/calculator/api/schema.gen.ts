@@ -162,7 +162,7 @@ export interface paths {
          *     calculator; elsewhere `x%` is `x ÷ 100`. Accepts `* / -` or `× ÷ −`.
          *
          *     Limits: 256 characters (spaces not counted), 128 tokens, 32 levels of
-         *     nesting. A syntax error is an `invalid-expression` problem whose
+         *     nesting (parentheses, prefix operators and chained `^` each count). A syntax error is an `invalid-expression` problem whose
          *     `position` is the 1-based column of the mistake.
          */
         post: operations["evaluate"];
@@ -281,7 +281,11 @@ export interface components {
             instance?: string;
             /** @description Echo of the `X-Request-ID` response header. */
             requestId?: string;
-            /** @description For `invalid-expression`, the 1-based column of the error, when it has one. */
+            /**
+             * @description For `POST /api/v1/evaluate`: the 1-based column of an `invalid-expression`
+             *     error, or of an invalid number (`invalid-number`, `number-too-large`).
+             *     Omitted when the error has no single location.
+             */
             position?: number;
         };
         Operation: {

@@ -80,9 +80,9 @@ The response echoes the **canonical form**: single spaces around binary operator
 | 5 | `%` | postfix | `50% × 8 = 4` |
 | 6 | `√` | prefix | `√16 + 9 = 13`, `√(16 + 9) = 5` |
 
-**Percent** behaves like a calculator's: when the right operand of `+` or `−` is exactly `x%`, it means x percent of the left operand (`200 + 15% = 230`). Anywhere else `x%` is `x ÷ 100` (`200 + 15% × 2 = 200.3`).
+**Percent** behaves like a calculator's: when the right operand of `+` or `−` is `x%` or a signed `−x%`, it means x percent of the left operand (`200 + 15% = 230`, `5 + −15% = 4.25`), exactly as the Basic mode computes it. Anywhere else `x%` is `x ÷ 100` (`200 + 15% × 2 = 200.3`).
 
-**Limits:** 256 characters (spaces not counted), 128 tokens, 32 levels of nested parentheses or prefix operators; each number has the limits above. There is no implicit multiplication: write `2 × (3)`, not `2(3)`.
+**Limits:** 256 characters (spaces not counted), 128 tokens, and 32 levels of nesting, where parentheses, prefix operators (`−`, `√`) and each `^` in a chain like `2^2^2` count as a level; each number has the limits above. There is no implicit multiplication: write `2 × (3)`, not `2(3)`.
 
 ### Discovery and health
 
@@ -148,6 +148,8 @@ Branch on the fragment of `type`; show `detail` to people. **400** means the req
 ### invalid-expression
 
 **400.** `POST /api/v1/evaluate` received something that is not a valid expression: an unknown character, a missing or extra parenthesis, two numbers in a row, a dangling operator, or a limit exceeded. `position` is the 1-based column of the mistake (omitted when the error has no single location, such as an expression that is too long); `detail` repeats it in words, e.g. `unexpected ')' at column 6`.
+
+An invalid number inside an expression keeps its own type (`invalid-number`, `number-too-large`) and also carries `position`. Arithmetic errors (`division-by-zero` and the rest) have no position: they belong to an operation, not a character.
 
 ### invalid-operation
 
