@@ -56,7 +56,7 @@ curl -s -X POST localhost:8080/api/v1/percent -H 'Content-Type: application/json
 
 ## Expressions
 
-`POST /api/v1/evaluate` takes a whole expression and applies operator precedence. It is what the Scientific mode uses; the endpoints above are what the Basic mode uses.
+`POST /api/v1/evaluate` takes a whole expression and applies operator precedence. It is what the web UI uses; the endpoints above are the building blocks, built on the same arithmetic.
 
 ```bash
 curl -s -X POST localhost:8080/api/v1/evaluate -H 'Content-Type: application/json' -d '{"expression":"2+3*4"}'
@@ -80,7 +80,7 @@ The response echoes the **canonical form**: single spaces around binary operator
 | 5 | `%` | postfix | `50% × 8 = 4` |
 | 6 | `√` | prefix | `√16 + 9 = 13`, `√(16 + 9) = 5` |
 
-**Percent** behaves like a calculator's: when the right operand of `+` or `−` is `x%` or a signed `−x%`, it means x percent of the left operand (`200 + 15% = 230`, `5 + −15% = 4.25`), exactly as the Basic mode computes it. Anywhere else `x%` is `x ÷ 100` (`200 + 15% × 2 = 200.3`).
+**Percent** behaves like a calculator's: when the right operand of `+` or `−` is `x%` or a signed `−x%`, it means x percent of the left operand (`200 + 15% = 230`, `5 + −15% = 4.25`), matching `POST /api/v1/percent` (`5 + percent(5, −15)`). Anywhere else `x%` is `x ÷ 100` (`200 + 15% × 2 = 200.3`).
 
 **Limits:** 256 characters (spaces not counted), 128 tokens, and 32 levels of nesting, where parentheses, prefix operators (`−`, `√`) and each `^` in a chain like `2^2^2` count as a level; each number has the limits above. There is no implicit multiplication: write `2 × (3)`, not `2(3)`.
 
