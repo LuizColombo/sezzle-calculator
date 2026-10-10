@@ -3,8 +3,8 @@ package expr
 import "github.com/LuizColombo/sezzle-calculator/api/internal/calc"
 
 // Node is an expression tree node. String returns the canonical form:
-// single spaces around binary operators, typographic symbols, parentheses
-// kept where the user wrote them. Parse(n.String()) yields the same tree.
+// single spaces around binary operators, typographic symbols, numbers and
+// parentheses as the user wrote them. Parse(n.String()) yields the same tree.
 type Node interface {
 	String() string
 }
@@ -20,8 +20,12 @@ var opSymbol = map[Kind]string{
 	Sqrt:    "√",
 }
 
-// Num is a number literal.
-type Num struct{ Value calc.Number }
+// Num is a number literal. Text is the literal as typed; the canonical form
+// keeps it, because a plain rendering of 1E700 would be 701 characters long.
+type Num struct {
+	Value calc.Number
+	Text  string
+}
 
 // Group is a parenthesised expression, kept so the canonical form matches
 // what was typed.
@@ -48,7 +52,7 @@ type PctOf struct {
 	Base, Rate Node
 }
 
-func (n *Num) String() string    { return n.Value.String() }
+func (n *Num) String() string    { return n.Text }
 func (n *Group) String() string  { return "(" + n.X.String() + ")" }
 func (n *Unary) String() string  { return opSymbol[n.Op] + n.X.String() }
 func (n *Binary) String() string { return n.L.String() + " " + opSymbol[n.Op] + " " + n.R.String() }

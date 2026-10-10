@@ -44,7 +44,16 @@ var symbols = map[rune]Kind{
 // scanned here; their value is checked by calc.Parse in the parser.
 func Lex(s string) ([]Token, error) {
 	runes := []rune(s)
-	if len(runes) > MaxLength {
+	if len(runes) > maxRawLength {
+		return nil, syntaxError(0, "expression longer than %d characters", maxRawLength)
+	}
+	visible := 0
+	for _, r := range runes {
+		if !unicode.IsSpace(r) {
+			visible++
+		}
+	}
+	if visible > MaxLength {
 		return nil, syntaxError(0, "expression longer than %d characters", MaxLength)
 	}
 

@@ -10,9 +10,13 @@ import (
 // Limits on what Parse accepts. They bound the parser's recursion and the
 // work a single request can ask for.
 const (
-	MaxLength = 256 // code points
+	MaxLength = 256 // code points, not counting whitespace
 	MaxTokens = 128 // excluding the end marker
 	MaxDepth  = 32  // nested parentheses and prefix operators
+
+	// maxRawLength bounds the input including whitespace. MaxLength ignores
+	// spaces so that the canonical form, which adds them, is always accepted.
+	maxRawLength = 4 * MaxLength
 )
 
 // ErrSyntax is wrapped by every SyntaxError; callers match it with errors.Is.

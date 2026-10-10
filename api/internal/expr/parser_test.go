@@ -81,7 +81,8 @@ func TestParseCanonicalForm(t *testing.T) {
 		{"2 ^ - 1", "2 ^ −1"},
 		{"√ ( 16 + 9 )", "√(16 + 9)"},
 		{"200 + 15 %", "200 + 15%"},
-		{"1.50 × 2", "1.5 × 2"},
+		{"1.50 × 2", "1.50 × 2"}, // numbers are kept as typed
+		{"1E700 + 1", "1E700 + 1"},
 		{"8 / 2", "8 ÷ 2"},
 	}
 	for _, c := range cases {

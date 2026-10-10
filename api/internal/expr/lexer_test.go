@@ -94,6 +94,7 @@ func TestLexErrors(t *testing.T) {
 		{"2 $ 3", 3, "unexpected '$' at column 3"},
 		{"2 + x", 5, "unexpected 'x'"},
 		{strings.Repeat("1", MaxLength+1), 0, "longer than 256"},
+		{"1" + strings.Repeat(" ", maxRawLength), 0, "longer than"},
 		{strings.Repeat("1+", MaxTokens/2) + "1", 0, "more than 128 tokens"},
 	}
 	for _, c := range cases {
@@ -110,6 +111,14 @@ func TestLexErrors(t *testing.T) {
 				t.Fatalf("err = %q (column %d), want %q at column %d", err, se.Column, c.contains, c.column)
 			}
 		})
+	}
+}
+
+// The length limit counts non-space characters, so the canonical form (which
+// adds spaces around operators) of an accepted expression is accepted too.
+func TestLexLengthIgnoresSpaces(t *testing.T) {
+	if _, err := Lex(strings.Repeat("1", MaxLength) + strings.Repeat(" ", 100)); err != nil {
+		t.Fatalf("%d characters plus spaces should be accepted: %v", MaxLength, err)
 	}
 }
 

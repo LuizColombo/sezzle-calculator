@@ -115,7 +115,7 @@ func (p *parser) prefix() (Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%w at column %d", err, t.Column)
 		}
-		return &Num{Value: v}, nil
+		return &Num{Value: v, Text: t.Text}, nil
 	case LParen:
 		x, err := p.nested(t, 0)
 		if err != nil {
