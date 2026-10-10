@@ -88,3 +88,64 @@ func TestDivide(t *testing.T) {
 		{name: "underflow", a: "1e-900", b: "1e900", wantErr: ErrResultTooLarge},
 	})
 }
+
+func TestPower(t *testing.T) {
+	runBinary(t, Power, []binaryCase{
+		{name: "integer exponent", a: "2", b: "10", want: "1024"},
+		{name: "negative base odd exponent", a: "-2", b: "3", want: "-8"},
+		{name: "negative base even exponent", a: "-2", b: "2", want: "4"},
+		{name: "fractional exponent", a: "4", b: "0.5", want: "2"},
+		{name: "negative exponent", a: "2", b: "-2", want: "0.25"},
+		{name: "zero exponent", a: "123.4", b: "0", want: "1"},
+		{name: "zero to zero is one", a: "0", b: "0", want: "1"},
+		{name: "zero to positive", a: "0", b: "5", want: "0"},
+		{name: "integer-valued decimal exponent", a: "-8", b: "2.0", want: "64"},
+		{name: "zero to negative", a: "0", b: "-1", wantErr: ErrInvalidPower},
+		{name: "negative base fractional exponent", a: "-8", b: "0.5", wantErr: ErrInvalidPower},
+		{name: "overflow", a: "10", b: "1001", wantErr: ErrResultTooLarge},
+		{name: "huge exponent", a: "2", b: "9999", wantErr: ErrResultTooLarge},
+	})
+}
+
+func TestSqrt(t *testing.T) {
+	cases := []struct {
+		in, want string
+		wantErr  error
+	}{
+		{in: "16", want: "4"},
+		// √2 = 1.41421356237309504880…; 16 places round to …0950, trimmed.
+		// (float64 would print …0951.)
+		{in: "2", want: "1.414213562373095"},
+		{in: "0.25", want: "0.5"},
+		{in: "0", want: "0"},
+		{in: "-0", want: "0"},
+		{in: "-1", wantErr: ErrNegativeSqrt},
+	}
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			got, err := Sqrt(mustParse(t, c.in))
+			if c.wantErr != nil {
+				if !errors.Is(err, c.wantErr) {
+					t.Fatalf("error = %v, want %v", err, c.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got.String() != c.want {
+				t.Fatalf("got %q, want %q", got.String(), c.want)
+			}
+		})
+	}
+}
+
+func TestPercent(t *testing.T) {
+	runBinary(t, Percent, []binaryCase{
+		{name: "fifteen percent of two hundred", a: "200", b: "15", want: "30"},
+		{name: "half percent", a: "50", b: "0.5", want: "0.25"},
+		{name: "percent of zero", a: "0", b: "15", want: "0"},
+		{name: "negative percent", a: "100", b: "-10", want: "-10"},
+		{name: "one percent of one", a: "1", b: "1", want: "0.01"},
+	})
+}

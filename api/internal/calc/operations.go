@@ -45,3 +45,48 @@ func finish(r Number, cond apd.Condition, err error) (Number, error) {
 	}
 	return r, nil
 }
+
+var (
+	one     = Number{d: *apd.New(1, 0)}
+	hundred = Number{d: *apd.New(100, 0)}
+)
+
+// Power returns base ^ exponent. 0^0 is defined as 1. Zero to a negative
+// power and a negative base with a fractional exponent are errors.
+func Power(base, exponent Number) (Number, error) {
+	switch {
+	case base.IsZero() && exponent.IsZero():
+		return one, nil
+	case base.IsZero() && exponent.IsNegative():
+		return Number{}, fmt.Errorf("%w: zero to a negative power", ErrInvalidPower)
+	case base.IsNegative() && !isInteger(exponent):
+		return Number{}, fmt.Errorf("%w: negative base with a fractional exponent", ErrInvalidPower)
+	}
+	return apply(ctx.Pow, base, exponent)
+}
+
+// Sqrt returns the square root of v. Negative input is an error.
+func Sqrt(v Number) (Number, error) {
+	if v.IsNegative() {
+		return Number{}, ErrNegativeSqrt
+	}
+	var r Number
+	cond, err := ctx.Sqrt(&r.d, &v.d)
+	return finish(r, cond, err)
+}
+
+// Percent returns value × percent ÷ 100.
+func Percent(value, percent Number) (Number, error) {
+	product, err := Multiply(value, percent)
+	if err != nil {
+		return Number{}, err
+	}
+	return apply(ctx.Quo, product, hundred)
+}
+
+// isInteger reports whether n has no fractional part (2.0 counts as integer).
+func isInteger(n Number) bool {
+	var d apd.Decimal
+	d.Reduce(&n.d)
+	return d.Exponent >= 0
+}
