@@ -98,6 +98,43 @@ func TestStringRoundsTo16DecimalPlaces(t *testing.T) {
 	}
 }
 
+// A non-zero value that 16-place rounding would turn into 0 is shown in
+// exponent notation instead, so the API never reports a non-zero result as 0.
+func TestStringKeepsTinyValuesNonZero(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"1e-17", "1E-17"},
+		{"-1.5e-20", "-1.5E-20"},
+		{"1.23456789e-900", "1.23456789E-900"},
+		{"4e-17", "4E-17"},
+		{"6e-17", "0.0000000000000001"}, // rounds up to a visible digit
+		{"9.7e-16", "0.000000000000001"}, // rounding carries into a new digit (found by FuzzParse)
+	}
+	for _, c := range cases {
+		n, err := Parse(c.in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := n.String(); got != c.want {
+			t.Errorf("Parse(%q).String() = %q, want %q", c.in, got, c.want)
+		}
+		if back, err := Parse(n.String()); err != nil || back.IsZero() {
+			t.Errorf("String() of %q does not parse back to a non-zero value: %v", c.in, err)
+		}
+	}
+}
+
+// String must round even when rounding needs more digits than the working
+// precision (here 50). Parse limits inputs, so build the value directly.
+func TestStringRoundsLongValues(t *testing.T) {
+	var n Number
+	if _, _, err := n.d.SetString(strings.Repeat("9", 20) + "." + strings.Repeat("1", 30)); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := n.String(), strings.Repeat("9", 20)+"."+strings.Repeat("1", 16); got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
 func TestIsZero(t *testing.T) {
 	for _, s := range []string{"0", "0.0", "-0", "0e5"} {
 		n, _ := Parse(s)

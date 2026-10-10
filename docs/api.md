@@ -17,6 +17,7 @@ Numbers are decimal strings: `"0.1"`, `"-42"`, `"1.5e3"`. JSON numbers are rejec
 | Magnitude of inputs and results | 10^−1000 to 10^1000 |
 | Working precision | 34 digits, round half to even |
 | Decimal places in results | at most 16, trailing zeros removed |
+| Results below 10^−16 | exponent notation, e.g. `"1E-17"`, so a non-zero result is never shown as `"0"` |
 
 ## Operations
 

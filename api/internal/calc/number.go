@@ -76,18 +76,31 @@ func (n Number) IsNegative() bool { return n.d.Negative && !n.d.IsZero() }
 
 // String renders the number in plain decimal notation, rounded half-even to
 // at most 16 decimal places, with trailing zeros removed and no negative zero.
+// A non-zero value that the rounding would turn into 0 is rendered in
+// exponent notation instead ("1E-17"), so a result is never reported as 0
+// when it is not. Both forms are accepted by Parse.
 func (n Number) String() string {
 	var d apd.Decimal
-	d.Set(&n.d)
-	if d.Exponent < -maxScale {
-		var q apd.Decimal
-		if _, err := ctx.Quantize(&q, &d, -maxScale); err == nil {
-			d.Set(&q)
-		}
-	}
-	d.Reduce(&d)
+	d.Reduce(&n.d)
 	if d.IsZero() {
 		return "0"
+	}
+	if d.Exponent < -maxScale {
+		// Size the context to the rounded result so Quantize never runs out
+		// of precision: integer digits + 16 places + 1 for a rounding carry
+		// (9.7E-16 → 0.000000000000001). Values are bounded by MaxExponent,
+		// so this always fits in uint32.
+		digits := min(max(adjustedExponent(&d)+2+maxScale, 1), MaxExponent+2+maxScale)
+		rounding := apd.BaseContext.WithPrecision(uint32(digits)) //nolint:gosec // bounded on the line above
+		rounding.Rounding = apd.RoundHalfEven
+		var q apd.Decimal
+		if _, err := rounding.Quantize(&q, &d, -maxScale); err != nil {
+			panic(fmt.Sprintf("calc: quantize %s: %v", d.String(), err)) // unreachable: precision is sized above
+		}
+		if q.IsZero() {
+			return d.Text('E')
+		}
+		d.Reduce(&q)
 	}
 	return d.Text('f')
 }

@@ -11,7 +11,9 @@ info:
 
     Limits: inputs have at most 64 significant digits and a magnitude within
     10^±1000. Arithmetic uses 34 digits of precision (decimal128) with
-    round-half-even; results are rounded to at most 16 decimal places.
+    round-half-even; results are rounded to at most 16 decimal places. A
+    non-zero result that would round to zero is returned in exponent notation
+    instead (`"1E-17"`); every result is a valid input.
 
     Errors use [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457)
     (`application/problem+json`). The `type` URI points to the matching

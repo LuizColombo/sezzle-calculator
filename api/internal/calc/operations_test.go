@@ -71,6 +71,7 @@ func TestMultiply(t *testing.T) {
 		{name: "trailing zeros trimmed", a: "2.50", b: "2", want: "5"},
 		{name: "negative", a: "-3", b: "3", want: "-9"},
 		{name: "by zero", a: "123.456", b: "0", want: "0"},
+		{name: "tiny product stays non-zero", a: "1e-8", b: "1e-9", want: "1E-17"},
 		{name: "overflow", a: "1e600", b: "1e600", wantErr: ErrResultTooLarge},
 	})
 }
@@ -82,6 +83,7 @@ func TestDivide(t *testing.T) {
 		{name: "two thirds rounds half-even", a: "2", b: "3", want: "0.6666666666666667"},
 		{name: "negative", a: "-1", b: "8", want: "-0.125"},
 		{name: "zero numerator", a: "0", b: "5", want: "0"},
+		{name: "tiny quotient stays non-zero", a: "1", b: "1e17", want: "1E-17"},
 		{name: "by zero", a: "1", b: "0", wantErr: ErrDivisionByZero},
 		{name: "zero by zero", a: "0", b: "0", wantErr: ErrDivisionByZero},
 		{name: "by negative zero", a: "1", b: "-0", wantErr: ErrDivisionByZero},
