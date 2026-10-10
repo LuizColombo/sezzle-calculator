@@ -22,3 +22,4 @@
 6. [CSS Modules and design tokens, not Tailwind](adr/0006-css-modules-over-tailwind.md)
 7. [One repository, each service owns its build](adr/0007-monorepo-layout.md)
 8. [A Pratt parser, evaluated on the server](adr/0008-pratt-parser.md)
+9. [One mode, with operator precedence](adr/0009-one-mode.md)
