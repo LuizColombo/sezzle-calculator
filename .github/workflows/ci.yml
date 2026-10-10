@@ -15,7 +15,7 @@ concurrency:
 jobs:
   api:
     name: API · lint, test, fuzz
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: api
@@ -45,7 +45,7 @@ jobs:
 
   web:
     name: Web · lint, typecheck, test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: web
@@ -76,7 +76,7 @@ jobs:
 
   e2e:
     name: Docker · build and end-to-end
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [api, web]
     steps:
       - uses: actions/checkout@v7
