@@ -2,6 +2,7 @@ package calc
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -152,5 +153,6 @@ func TestPercent(t *testing.T) {
 		{name: "percent of zero", a: "0", b: "15", want: "0"},
 		{name: "negative percent", a: "100", b: "-10", want: "-10"},
 		{name: "one percent of one", a: "1", b: "1", want: "0.01"},
+		{name: "no spurious overflow at the top of the range", a: "1e1000", b: "100", want: "1" + strings.Repeat("0", 1000)},
 	})
 }

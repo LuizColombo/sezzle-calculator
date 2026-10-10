@@ -75,13 +75,15 @@ func Sqrt(v Number) (Number, error) {
 	return finish(r, cond, err)
 }
 
-// Percent returns value × percent ÷ 100.
+// Percent returns value × percent ÷ 100. Dividing first is exact (it only
+// shifts the exponent) and avoids overflowing on an in-range result such as
+// 100 % of 1e1000.
 func Percent(value, percent Number) (Number, error) {
-	product, err := Multiply(value, percent)
+	fraction, err := apply(ctx.Quo, percent, hundred)
 	if err != nil {
 		return Number{}, err
 	}
-	return apply(ctx.Quo, product, hundred)
+	return Multiply(value, fraction)
 }
 
 // isInteger reports whether n has no fractional part (2.0 counts as integer).
