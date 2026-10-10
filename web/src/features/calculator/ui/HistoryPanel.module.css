@@ -11,8 +11,11 @@
   /*
    * contain: size gives the panel no height of its own, so the shared row is
    * as tall as the card and the panel stretches to match; long history scrolls.
+   * Containment would also zero its intrinsic width, so declare it explicitly.
    */
   contain: size;
+  contain-intrinsic-size: 300px 0;
+  flex: 0 0 300px;
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
 }
@@ -67,8 +70,56 @@
   background: var(--color-key);
 }
 
-.danger {
-  color: var(--color-error);
+.textButton:disabled {
+  color: var(--color-text-muted);
+  background: none;
+  cursor: default;
+}
+
+.confirm {
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.confirmInner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-4);
+}
+
+.confirmText {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.confirmActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.pillButton {
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--color-key);
+  font-size: var(--text-small);
+  font-weight: 600;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+.pillButton:hover {
+  background: var(--color-key-hover);
+}
+
+.pillDanger {
+  background: var(--color-error);
+  color: var(--color-on-error);
+}
+
+.pillDanger:hover {
+  background: var(--color-error);
+  filter: brightness(1.08);
 }
 
 .empty {

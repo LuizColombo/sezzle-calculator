@@ -105,12 +105,50 @@ function PanelContent({ entries, onRecall, onClear, onClose }: Omit<HistoryPanel
           History
         </h2>
         <div className={styles.actions}>
-          {entries.length > 0 &&
-            (confirming ? (
-              <>
+          {entries.length > 0 && (
+            <button
+              type="button"
+              className={styles.textButton}
+              aria-expanded={confirming}
+              disabled={confirming}
+              onClick={() => {
+                setConfirming(true);
+              }}
+            >
+              Clear
+            </button>
+          )}
+          <button ref={closeRef} type="button" className={styles.textButton} onClick={onClose}>
+            Done
+          </button>
+        </div>
+      </header>
+
+      {/* Confirmation gets its own full-width row instead of crowding the header. */}
+      <AnimatePresence initial={false}>
+        {confirming && entries.length > 0 && (
+          <motion.div
+            key="confirm"
+            role="group"
+            aria-label="Confirm clearing history"
+            className={styles.confirm}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 38 }}
+          >
+            <div className={styles.confirmInner}>
+              <p className={styles.confirmText}>
+                Delete{" "}
+                {entries.length === 1
+                  ? "1 calculation"
+                  : `all ${String(entries.length)} calculations`}
+                ?
+              </p>
+              <div className={styles.confirmActions}>
                 <button
                   type="button"
-                  className={styles.textButton}
+                  className={styles.pillButton}
                   onClick={() => {
                     setConfirming(false);
                   }}
@@ -119,7 +157,7 @@ function PanelContent({ entries, onRecall, onClear, onClose }: Omit<HistoryPanel
                 </button>
                 <button
                   type="button"
-                  className={cx(styles.textButton, styles.danger)}
+                  className={cx(styles.pillButton, styles.pillDanger)}
                   aria-label="Clear all history"
                   onClick={() => {
                     setConfirming(false);
@@ -128,23 +166,11 @@ function PanelContent({ entries, onRecall, onClear, onClose }: Omit<HistoryPanel
                 >
                   Clear all
                 </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className={styles.textButton}
-                onClick={() => {
-                  setConfirming(true);
-                }}
-              >
-                Clear
-              </button>
-            ))}
-          <button ref={closeRef} type="button" className={styles.textButton} onClick={onClose}>
-            Done
-          </button>
-        </div>
-      </header>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {entries.length === 0 ? (
         <p className={styles.empty}>No calculations yet.</p>

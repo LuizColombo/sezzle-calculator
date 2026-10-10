@@ -19,8 +19,9 @@
   flex-direction: column;
   justify-content: flex-end;
   gap: var(--space-2);
-  width: 100%;
-  max-width: 440px;
+  /* Fills the screen on phones; see the desktop basis below. */
+  flex: 1 1 auto;
+  min-width: 0;
   padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4)
     max(var(--space-4), env(safe-area-inset-bottom));
   background: var(--color-surface);
@@ -66,11 +67,11 @@
     padding: var(--space-6);
   }
 
-  .stage {
-    width: auto;
-  }
+
 
   .card {
+    /* 440 px, shrinking only if the window is too narrow for card + panel. */
+    flex: 0 1 440px;
     justify-content: flex-start;
     padding: var(--space-6);
     border-radius: var(--radius-card);

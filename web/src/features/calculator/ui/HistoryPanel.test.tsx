@@ -37,6 +37,9 @@ describe("HistoryPanel", () => {
     render(<HistoryPanel {...props} onClear={onClear} />);
     await userEvent.click(screen.getByRole("button", { name: "Clear" }));
     expect(onClear).not.toHaveBeenCalled();
+    expect(screen.getByRole("group", { name: "Confirm clearing history" })).toHaveTextContent(
+      "Delete all 2 calculations?",
+    );
     await userEvent.click(screen.getByRole("button", { name: "Clear all history" }));
     expect(onClear).toHaveBeenCalled();
   });
@@ -48,11 +51,16 @@ describe("HistoryPanel", () => {
       act(() => {
         screen.getByRole("button", { name: "Clear" }).click();
       });
-      expect(screen.getByRole("button", { name: "Clear all history" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Clear" })).toBeDisabled();
       act(() => {
         vi.advanceTimersByTime(4000);
       });
-      expect(screen.queryByRole("button", { name: "Clear all history" })).not.toBeInTheDocument();
+      // The row animates out; the state behind it is already reset.
+      expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Clear" })).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
     } finally {
       vi.useRealTimers();
     }
