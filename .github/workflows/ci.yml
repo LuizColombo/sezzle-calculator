@@ -25,7 +25,6 @@ jobs:
         with:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
-      - run: go vet ./...
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.14.0
