@@ -365,7 +365,7 @@ Status badge in the README. Coverage numbers are quoted in `docs/testing.md` and
 
 ## 8. Git conventions
 
-- Conventional Commits, English, subject ≤ 50 chars, body only when the why is not obvious.
+- Conventional Commits, English, subject ≤ 72 chars (aim for 50), body only when the why is not obvious.
 - One commit per logical change that compiles and passes tests. Test and implementation land together.
 - Everything on `main`; no feature branches for a solo project.
 - No AI attribution trailers.

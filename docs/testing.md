@@ -1,6 +1,6 @@
 # Testing
 
-Every layer is tested at the level where its bugs live. Most tests are fast unit tests of pure code; fewer, slower tests check the pieces together; two end-to-end flows check the real stack.
+Every layer is tested at the level where its bugs live. Most tests are fast unit tests of pure code; fewer, slower tests check the pieces together; four end-to-end scenarios check the real stack.
 
 ```
             e2e (Playwright, real nginx + Go)          4 scenarios × desktop & mobile
@@ -17,7 +17,7 @@ cd api
 go test -race ./...                                   # everything, with the race detector
 go test -cover ./...                                  # coverage per package
 make cover                                            # coverage.html
-go test -run='^$' -fuzz=FuzzParse -fuzztime=30s ./internal/calc
+go test -run='^$' -fuzz=FuzzParse -fuzztime=20s ./internal/calc
 ```
 
 | Package | What is tested | Coverage |
@@ -51,7 +51,7 @@ npm run e2e            # Playwright against docker compose (start it first)
 | `ui` | Components through the accessibility tree: names, `aria-pressed`, live region, errors, the history panel's confirm-to-clear, Escape handling, and full user flows with the keyboard and the mouse |
 | `e2e` | `0.1 + 0.2 = 0.3` through nginx and Go, division by zero, chaining with history surviving a reload, the physical keyboard — on a desktop and a phone viewport |
 
-Coverage across `src/features`: 95 % of statements and 91 % of branches.
+Coverage across `src/features`: 95 % of statements and 90 % of branches.
 
 Component and hook tests talk to [msw](https://mswjs.io), which intercepts `fetch` with a float-based stand-in for the API. The stand-in is deliberately simple: the Go tests own arithmetic, the frontend tests own wiring and rendering. msw is configured to fail any test that makes a request it does not handle.
 
@@ -61,6 +61,6 @@ Component and hook tests talk to [msw](https://mswjs.io), which intercepts `fetc
 
 | Job | Steps |
 |---|---|
-| API | `go vet`, golangci-lint, `go test -race` with coverage (summary on the run page, HTML as an artifact), 20 s of fuzzing |
+| API | golangci-lint (including govet), `go test -race` with coverage (summary on the run page, HTML as an artifact), 20 s of fuzzing |
 | Web | ESLint, Prettier, `tsc`, OpenAPI lint, a check that `schema.gen.ts` matches the contract, Vitest with coverage |
 | Docker · e2e | Builds both images, starts the stack with health checks, runs Playwright, uploads the report |

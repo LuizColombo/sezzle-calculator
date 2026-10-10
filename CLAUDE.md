@@ -6,5 +6,5 @@
 - Frontend (`web/`): React 19 + TypeScript strict + Vite. Calculator logic lives in `src/features/calculator/model/reducer.ts` (pure). Components only render. Styling: CSS Modules + tokens in `src/styles/tokens.css`. Animations: `motion`.
 - Numbers cross the API as JSON strings. Errors are `application/problem+json`.
 - Tests first. `cd api && go test ./...` and `cd web && npm test` must pass before every commit.
-- Commits: Conventional Commits, subject ≤ 50 chars, one logical change per commit, no attribution trailers.
+- Commits: Conventional Commits, subject ≤ 72 chars (aim for 50), one logical change per commit, no attribution trailers.
 - Run everything: `docker compose up`. Dev: `make dev`.
