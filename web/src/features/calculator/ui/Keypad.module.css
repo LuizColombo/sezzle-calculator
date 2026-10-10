@@ -5,3 +5,10 @@
   grid-auto-rows: clamp(48px, min(17vw, 9dvh), 72px);
   gap: var(--space-3);
 }
+
+/* Desktop: the card must fit short laptop windows (≈ 620 px tall) without scrolling. */
+@media (min-width: 721px) {
+  .grid {
+    grid-auto-rows: clamp(44px, 7.5dvh, 72px);
+  }
+}

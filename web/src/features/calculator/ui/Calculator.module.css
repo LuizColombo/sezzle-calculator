@@ -72,7 +72,7 @@
 @media (min-width: 721px) {
   .layout {
     align-items: center;
-    padding: var(--space-8);
+    padding: var(--space-6);
   }
 
   .stage {
