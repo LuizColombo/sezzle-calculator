@@ -4,6 +4,15 @@ import { describe, expect, it } from "vitest";
 import { server } from "../../../test/server";
 import type { CalculatorEvent } from "../model/types";
 import { useCalculator } from "./useCalculator";
+import { useHistory } from "./useHistory";
+
+/** The calculator with a real history, wired the way Calculator wires them. */
+function renderCalculator(tuning: Parameters<typeof useCalculator>[0] = {}) {
+  return renderHook(() => {
+    const history = useHistory();
+    return { ...useCalculator(tuning, history.add), history };
+  });
+}
 
 const digit = (d: string): CalculatorEvent => ({ type: "digit", digit: d });
 
@@ -22,7 +31,7 @@ const onePlusTwo: CalculatorEvent[] = [
 
 describe("useCalculator", () => {
   it("performs a binary operation through the API and records it in history", async () => {
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, onePlusTwo);
     expect(result.current.state.phase).toBe("awaitingResult");
     await waitFor(() => {
@@ -33,7 +42,7 @@ describe("useCalculator", () => {
   });
 
   it("does not record intermediate results of a chain", async () => {
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, [digit("2"), { type: "operator", operator: "add" }, digit("3")]);
     sendAll(result.current.send, [{ type: "operator", operator: "multiply" }]);
     await waitFor(() => {
@@ -47,7 +56,7 @@ describe("useCalculator", () => {
   });
 
   it("records unary operations", async () => {
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, [digit("1"), digit("6"), { type: "unary", operator: "sqrt" }]);
     await waitFor(() => {
       expect(result.current.state.display).toBe("4");
@@ -56,7 +65,7 @@ describe("useCalculator", () => {
   });
 
   it("records 200 + 5% once, as the final sum, not the intermediate percentage", async () => {
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, [
       digit("2"),
       digit("0"),
@@ -78,7 +87,7 @@ describe("useCalculator", () => {
   });
 
   it("describes a standalone percentage in history", async () => {
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, [digit("5"), digit("0"), { type: "unary", operator: "percent" }]);
     await waitFor(() => {
       expect(result.current.state.display).toBe("0.5");
@@ -87,7 +96,7 @@ describe("useCalculator", () => {
   });
 
   it("surfaces an API problem as the error state, without history", async () => {
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, [
       digit("1"),
       { type: "operator", operator: "divide" },
@@ -103,7 +112,7 @@ describe("useCalculator", () => {
 
   it("reports a network failure and retries the same calculation", async () => {
     server.use(http.post("/api/v1/add", () => HttpResponse.error()));
-    const { result } = renderHook(() => useCalculator({ attempts: 1 }));
+    const { result } = renderCalculator({ attempts: 1 });
     sendAll(result.current.send, onePlusTwo);
     await waitFor(() => {
       expect(result.current.state.error?.kind).toBe("network");
@@ -121,7 +130,7 @@ describe("useCalculator", () => {
 
   it("retries a failed unary calculation", async () => {
     server.use(http.post("/api/v1/sqrt", () => HttpResponse.error()));
-    const { result } = renderHook(() => useCalculator({ attempts: 1 }));
+    const { result } = renderCalculator({ attempts: 1 });
     sendAll(result.current.send, [digit("9"), { type: "unary", operator: "sqrt" }]);
     await waitFor(() => {
       expect(result.current.state.error?.kind).toBe("network");
@@ -143,7 +152,7 @@ describe("useCalculator", () => {
         return HttpResponse.json({ operation: "add", inputs: {}, result: "3" });
       }),
     );
-    const { result } = renderHook(() => useCalculator());
+    const { result } = renderCalculator();
     sendAll(result.current.send, onePlusTwo);
     sendAll(result.current.send, [{ type: "allClear" }]);
     release();

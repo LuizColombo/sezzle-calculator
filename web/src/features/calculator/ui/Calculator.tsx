@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
 import type { CallOptions } from "../api/client";
 import { useCalculator } from "../hooks/useCalculator";
+import { useHistory } from "../hooks/useHistory";
 import { useKeyboard } from "../hooks/useKeyboard";
 import { useTheme } from "../hooks/useTheme";
 import styles from "./Calculator.module.css";
@@ -18,7 +19,8 @@ interface CalculatorProps {
 }
 
 export function Calculator({ tuning = {} }: CalculatorProps) {
-  const { state, send, retry, history } = useCalculator(tuning);
+  const history = useHistory();
+  const { state, send, retry } = useCalculator(tuning, history.add);
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyButton = useRef<HTMLButtonElement>(null);
   const narrow = useMediaQuery("(max-width: 720px)");

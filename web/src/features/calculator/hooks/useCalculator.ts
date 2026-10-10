@@ -2,9 +2,16 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import { ApiError, callOperation, type ApiResponse, type CallOptions } from "../api/client";
 import { initialState, reduce } from "../model/reducer";
 import { OPERATOR_SYMBOL, type CalculatorEvent, type PendingCall } from "../model/types";
-import { useHistory } from "./useHistory";
+import type { HistoryEntry } from "./useHistory";
 
 type TuningOptions = Pick<CallOptions, "attempts" | "baseDelayMs">;
+
+/** Receives each finished calculation; must be stable (e.g. useHistory's add). */
+export type Recorder = (entry: Omit<HistoryEntry, "at">) => void;
+
+// A module-level default: an inline arrow would be a new function each
+// render and re-run the request effect.
+const ignore: Recorder = () => undefined;
 
 /** Performs a pending call. Each branch is type-checked against the OpenAPI request body. */
 function perform(pending: PendingCall, options: CallOptions): Promise<ApiResponse> {
@@ -53,13 +60,16 @@ function retryEventFor(pending: PendingCall): CalculatorEvent {
 }
 
 /**
- * Owns the calculator state. Whenever the reducer records a pending call,
+ * Owns the Basic-mode calculator state. Whenever the reducer records a pending call,
  * this hook performs it against the API, feeds the outcome back to the
  * reducer, and adds shown results to the history.
  */
-export function useCalculator(tuning: TuningOptions = {}) {
+export function useCalculator(
+  tuning: TuningOptions = {},
+  /** Adds a finished calculation to the history shared by both modes. */
+  record: Recorder = ignore,
+) {
   const [state, dispatch] = useReducer(reduce, initialState);
-  const { entries, add, clear } = useHistory();
   const tuningRef = useRef(tuning);
   const lastFailedRef = useRef<PendingCall | null>(null);
 
@@ -78,7 +88,7 @@ export function useCalculator(tuning: TuningOptions = {}) {
         const finished =
           pending.kind === "binary" ? pending.then.type === "show" : pending.resume === "result";
         if (finished) {
-          add({ expression: historyExpression(pending), result: response.result });
+          record({ expression: historyExpression(pending), result: response.result });
         }
       },
       (err: unknown) => {
@@ -98,7 +108,7 @@ export function useCalculator(tuning: TuningOptions = {}) {
     return () => {
       controller.abort();
     };
-  }, [pending, add]);
+  }, [pending, record]);
 
   const send = useCallback((event: CalculatorEvent) => {
     dispatch(event);
@@ -109,5 +119,5 @@ export function useCalculator(tuning: TuningOptions = {}) {
     if (lastFailedRef.current) dispatch(retryEventFor(lastFailedRef.current));
   }, []);
 
-  return { state, send, retry, history: { entries, clear } };
+  return { state, send, retry };
 }
