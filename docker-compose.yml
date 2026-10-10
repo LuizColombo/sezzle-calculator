@@ -1,0 +1,43 @@
+# One command: `docker compose up --build`, then open http://localhost:8080.
+#
+# Images are built before any container is replaced, so a failed build never
+# takes down a stack that is already running. Only `web` publishes a port;
+# the API is reachable solely through nginx on the internal network.
+
+services:
+  api:
+    build:
+      context: ./api
+      args:
+        VERSION: ${VERSION:-dev}
+    init: true
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    healthcheck:
+      # Distroless has no shell or curl; the binary probes its own /healthz.
+      test: ["CMD", "/api", "-healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build: ./web
+    init: true
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
