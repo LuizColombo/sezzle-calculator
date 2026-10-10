@@ -50,6 +50,28 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
 
 const abortError = () => new DOMException("The operation was aborted.", "AbortError");
 
+/** Waits for `wait`, but rejects as soon as `signal` aborts. */
+function abortable(wait: Promise<void>, signal: AbortSignal | undefined): Promise<void> {
+  if (!signal) return wait;
+  if (signal.aborted) return Promise.reject(abortError());
+  return new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      reject(abortError());
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    wait.then(
+      () => {
+        signal.removeEventListener("abort", onAbort);
+        resolve();
+      },
+      (err: unknown) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err instanceof Error ? err : new Error(String(err)));
+      },
+    );
+  });
+}
+
 /**
  * POSTs an operation to the API.
  *
@@ -75,8 +97,10 @@ export async function callOperation<N extends OperationName>(
   let lastFailure = "request failed";
   for (let attempt = 0; attempt < attempts; attempt++) {
     if (attempt > 0) {
-      await sleep(random() * Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1)));
-      if (signal?.aborted) throw abortError();
+      await abortable(
+        sleep(random() * Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1))),
+        signal,
+      );
     }
 
     let response: Response;

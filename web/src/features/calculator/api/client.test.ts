@@ -39,6 +39,27 @@ describe("callOperation", () => {
     expect(init?.body).toBe(JSON.stringify({ a: "1", b: "2" }));
   });
 
+  it("passes the abort signal to fetch", async () => {
+    const controller = new AbortController();
+    fetchMock.mockResolvedValueOnce(ok("3"));
+    await callOperation("add", { a: "1", b: "2" }, { sleep, signal: controller.signal });
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+  });
+
+  it("stops waiting as soon as it is aborted during a backoff delay", async () => {
+    const controller = new AbortController();
+    fetchMock.mockImplementation(offline);
+    const neverEnding = () => new Promise<void>(() => undefined);
+    const call = callOperation(
+      "add",
+      { a: "1", b: "2" },
+      { sleep: neverEnding, signal: controller.signal },
+    );
+    await Promise.resolve();
+    controller.abort();
+    await expect(call).rejects.toMatchObject({ name: "AbortError" });
+  });
+
   it("throws ApiError with the problem on 4xx, without retrying", async () => {
     fetchMock.mockResolvedValueOnce(problem(422, "division by zero"));
     await expect(callOperation("divide", { a: "1", b: "0" }, { sleep })).rejects.toMatchObject({
