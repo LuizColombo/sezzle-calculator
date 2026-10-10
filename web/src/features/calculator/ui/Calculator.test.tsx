@@ -10,44 +10,56 @@ const press = async (...names: string[]) => {
 };
 
 const display = () => screen.getByRole("status");
+const region = () => screen.getByRole("region", { name: "display" });
 
 describe("Calculator", () => {
-  it("computes 1 + 2 = 3 through the API", async () => {
+  it("applies operator precedence: 2 + 3 × 4 = 14", async () => {
     render(<Calculator />);
-    await press("1", "add", "2", "equals");
+    await press("2", "add", "3", "multiply", "4", "equals");
     await waitFor(() => {
-      expect(display()).toHaveTextContent("3");
+      expect(display()).toHaveTextContent("14");
     });
-    expect(screen.getByText("1 + 2 =")).toBeInTheDocument();
+    expect(region()).toHaveTextContent("2 + 3 × 4 =");
   });
 
-  it("shows the active operator until the second operand starts", async () => {
+  it("evaluates parentheses", async () => {
     render(<Calculator />);
-    await press("9", "multiply");
-    expect(screen.getByRole("button", { name: "multiply" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    await press(
+      "open parenthesis",
+      "2",
+      "add",
+      "3",
+      "close parenthesis",
+      "multiply",
+      "4",
+      "equals",
     );
-    await press("2");
-    expect(screen.getByRole("button", { name: "multiply" })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
+    await waitFor(() => {
+      expect(display()).toHaveTextContent("20");
+    });
   });
 
-  it("shows Error with the API detail on division by zero, then recovers", async () => {
+  it("shows a live preview while typing", async () => {
+    render(<Calculator />);
+    await press("2", "add", "3", "multiply", "4");
+    expect(display()).toHaveTextContent("2 + 3 × 4");
+    await waitFor(() => {
+      expect(screen.getByTestId("preview")).toHaveTextContent("14");
+    });
+  });
+
+  it("shows the API's detail on division by zero, then starts over", async () => {
     render(<Calculator />);
     await press("1", "divide", "0", "equals");
     await waitFor(() => {
-      expect(display()).toHaveTextContent("Error");
+      expect(region()).toHaveTextContent("division by zero");
     });
-    expect(screen.getByText("division by zero")).toBeInTheDocument();
     await press("4");
     expect(display()).toHaveTextContent("4");
   });
 
   it("shows a banner when the API is unreachable and recovers on retry", async () => {
-    server.use(http.post("/api/v1/add", () => HttpResponse.error()));
+    server.use(http.post("/api/v1/evaluate", () => HttpResponse.error()));
     render(<Calculator tuning={{ attempts: 1 }} />);
     await press("1", "add", "2", "equals");
     expect(await screen.findByRole("alert")).toHaveTextContent(/can.t reach/i);
@@ -72,6 +84,15 @@ describe("Calculator", () => {
     expect(display()).toHaveTextContent("0");
   });
 
+  it("evaluates on Enter after keys were clicked, instead of re-pressing the last key", async () => {
+    render(<Calculator />);
+    await press("1", "add", "2");
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(display()).toHaveTextContent("3");
+    });
+  });
+
   it("recalls a history entry as an operand", async () => {
     render(<Calculator />);
     await userEvent.keyboard("2*3{Enter}");
@@ -84,29 +105,6 @@ describe("Calculator", () => {
     await press("add", "1", "equals");
     await waitFor(() => {
       expect(display()).toHaveTextContent("7");
-    });
-  });
-
-  it("evaluates on Enter after keys were clicked, instead of re-pressing the last key", async () => {
-    render(<Calculator />);
-    await press("1", "add", "2");
-    await userEvent.keyboard("{Enter}");
-    await waitFor(() => {
-      expect(display()).toHaveTextContent("3");
-    });
-  });
-
-  it("shows power as the active operator", async () => {
-    render(<Calculator />);
-    await press("2", "power");
-    expect(screen.getByRole("button", { name: "power" })).toHaveAttribute("aria-pressed", "true");
-  });
-
-  it("announces the API's error detail in the live region", async () => {
-    render(<Calculator />);
-    await press("1", "divide", "0", "equals");
-    await waitFor(() => {
-      expect(display()).toHaveTextContent(/Error.*division by zero/);
     });
   });
 
@@ -125,34 +123,6 @@ describe("Calculator", () => {
     await press("Switch to light theme");
     expect(document.documentElement.dataset.theme).toBe("light");
     delete document.documentElement.dataset.theme;
-  });
-
-  it("evaluates with precedence in scientific mode", async () => {
-    render(<Calculator />);
-    await userEvent.click(screen.getByRole("radio", { name: "Scientific" }));
-    await userEvent.keyboard("2+3*4{Enter}");
-    await waitFor(() => {
-      expect(display()).toHaveTextContent("14");
-    });
-    expect(screen.getByRole("region", { name: "display" })).toHaveTextContent("2 + 3 × 4 =");
-  });
-
-  it("evaluates parentheses from the scientific keypad", async () => {
-    render(<Calculator />);
-    await userEvent.click(screen.getByRole("radio", { name: "Scientific" }));
-    await press(
-      "open parenthesis",
-      "2",
-      "add",
-      "3",
-      "close parenthesis",
-      "multiply",
-      "4",
-      "equals",
-    );
-    await waitFor(() => {
-      expect(display()).toHaveTextContent("20");
-    });
   });
 
   it("links to the API reference", () => {

@@ -3,26 +3,21 @@ import type { KeyDef } from "./keys";
 import { cx } from "./cx";
 import styles from "./Key.module.css";
 
-interface KeyProps<E> {
-  def: KeyDef<E>;
-  /** Only meaningful for operator keys: the operator waiting for its second operand. */
-  active: boolean;
-  onPress: (def: KeyDef<E>) => void;
+interface KeyProps {
+  def: KeyDef;
+  onPress: (def: KeyDef) => void;
 }
 
 const press = { type: "spring", stiffness: 700, damping: 30, mass: 0.6 } as const;
 
-export function Key<E>({ def, active, onPress }: KeyProps<E>) {
-  const isOperator = def.operator !== undefined;
-  const classes = cx(styles.key, styles[def.variant], active && styles.active);
+export function Key({ def, onPress }: KeyProps) {
+  const classes = cx(styles.key, styles[def.variant]);
   return (
     <motion.button
       type="button"
       className={classes}
-      data-columns={def.columns}
       data-rows={def.rows}
       aria-label={def.ariaLabel}
-      aria-pressed={isOperator ? active : undefined}
       whileTap={{ scale: 0.92 }}
       transition={press}
       onClick={(e) => {

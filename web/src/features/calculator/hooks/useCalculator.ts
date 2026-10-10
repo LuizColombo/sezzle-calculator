@@ -1,123 +1,116 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import { ApiError, callOperation, type ApiResponse, type CallOptions } from "../api/client";
-import { initialState, reduce } from "../model/reducer";
-import { OPERATOR_SYMBOL, type CalculatorEvent, type PendingCall } from "../model/types";
-import type { HistoryEntry } from "./useHistory";
+import { ApiError, callOperation, type CallOptions } from "../api/client";
+import {
+  closeAll,
+  initialExpression,
+  isComplete,
+  reduceExpression,
+  toApiString,
+  type ExprToken,
+  type ExpressionEvent,
+} from "../model/expression";
+import type { Recorder } from "./useHistory";
 
 type TuningOptions = Pick<CallOptions, "attempts" | "baseDelayMs">;
 
-/** Receives each finished calculation; must be stable (e.g. useHistory's add). */
-export type Recorder = (entry: Omit<HistoryEntry, "at">) => void;
+/** Pause after the last keystroke before asking for a preview. */
+export const PREVIEW_DELAY_MS = 250;
 
-// A module-level default: an inline arrow would be a new function each
-// render and re-run the request effect.
 const ignore: Recorder = () => undefined;
 
-/** Performs a pending call. Each branch is type-checked against the OpenAPI request body. */
-function perform(pending: PendingCall, options: CallOptions): Promise<ApiResponse> {
-  switch (pending.kind) {
-    case "binary": {
-      const { operator, a, b } = pending;
-      return operator === "power"
-        ? callOperation("power", { base: a, exponent: b }, options)
-        : callOperation(operator, { a, b }, options);
-    }
-    case "sqrt":
-      return callOperation("sqrt", { value: pending.value }, options);
-    case "percent":
-      // x % is x ÷ 100, i.e. 1 % of x.
-      return pending.mode === "plain"
-        ? callOperation("percent", { value: pending.value, percent: "1" }, options)
-        : callOperation("percent", { value: pending.value, percent: pending.percent }, options);
-  }
+/** A preview is only useful once there is something to compute. */
+const hasOperation = (tokens: ExprToken[]) => tokens.some((t) => t.kind !== "number");
+
+/** The expression a preview would evaluate, or null when there is nothing to preview. */
+function previewExpression(tokens: ExprToken[]): string | null {
+  return isComplete(tokens) && hasOperation(tokens) ? toApiString(closeAll(tokens)).text : null;
 }
 
-function historyExpression(pending: PendingCall): string {
-  switch (pending.kind) {
-    case "binary":
-      return `${pending.a} ${OPERATOR_SYMBOL[pending.operator]} ${pending.b} =`;
-    case "sqrt":
-      return `√${pending.value}`;
-    case "percent":
-      return pending.mode === "plain"
-        ? `${pending.value}%`
-        : `${pending.percent}% of ${pending.value}`;
+function toError(err: unknown): { error: ExpressionEvent & { type: "apiFailed" } } {
+  if (err instanceof ApiError) {
+    const position = typeof err.problem.position === "number" ? err.problem.position : undefined;
+    return {
+      error: {
+        type: "apiFailed",
+        error: { kind: "api", problem: err.problem },
+        ...(position === undefined ? {} : { position }),
+      },
+    };
   }
-}
-
-/** The key press that re-issues a failed calculation from the restored state. */
-function retryEventFor(pending: PendingCall): CalculatorEvent {
-  switch (pending.kind) {
-    case "binary":
-      return pending.then.type === "chain"
-        ? { type: "operator", operator: pending.then.nextOperator }
-        : { type: "equals" };
-    case "sqrt":
-      return { type: "unary", operator: "sqrt" };
-    case "percent":
-      return { type: "unary", operator: "percent" };
-  }
+  const message = err instanceof Error ? err.message : "request failed";
+  return { error: { type: "apiFailed", error: { kind: "network", message } } };
 }
 
 /**
- * Owns the Basic-mode calculator state. Whenever the reducer records a pending call,
- * this hook performs it against the API, feeds the outcome back to the
- * reducer, and adds shown results to the history.
+ * The calculator: the expression reducer plus the two kinds of request it
+ * needs — a debounced, cancellable live preview while typing, and the
+ * evaluation on "=", which is recorded in the shared history.
  */
-export function useCalculator(
-  tuning: TuningOptions = {},
-  /** Adds a finished calculation to the history shared by both modes. */
-  record: Recorder = ignore,
-) {
-  const [state, dispatch] = useReducer(reduce, initialState);
+export function useCalculator(tuning: TuningOptions = {}, record: Recorder = ignore) {
+  const [state, dispatch] = useReducer(reduceExpression, initialExpression);
   const tuningRef = useRef(tuning);
-  const lastFailedRef = useRef<PendingCall | null>(null);
+  const { pending, tokens, phase } = state;
 
-  const { pending } = state;
-
+  // "=": evaluate now.
   useEffect(() => {
     if (!pending) return;
     const controller = new AbortController();
-    perform(pending, { ...tuningRef.current, signal: controller.signal }).then(
+    callOperation(
+      "evaluate",
+      { expression: pending.expression },
+      { ...tuningRef.current, signal: controller.signal },
+    ).then(
       (response) => {
         if (controller.signal.aborted) return;
-        lastFailedRef.current = null;
-        dispatch({ type: "resultReceived", result: response.result });
-        // Only finished calculations are history entries: not the "5" of a
-        // chain ("2 + 3 ×"), nor the "30" of "200 + 15 %" before "=".
-        const finished =
-          pending.kind === "binary" ? pending.then.type === "show" : pending.resume === "result";
-        if (finished) {
-          record({ expression: historyExpression(pending), result: response.result });
-        }
+        dispatch({
+          type: "resultReceived",
+          expression: response.expression,
+          value: response.result,
+        });
+        record({ expression: `${response.expression} =`, result: response.result });
       },
       (err: unknown) => {
-        if (controller.signal.aborted) return;
-        if (err instanceof ApiError) {
-          lastFailedRef.current = null;
-          dispatch({ type: "apiFailed", error: { kind: "api", problem: err.problem } });
-        } else {
-          lastFailedRef.current = pending;
-          const message = err instanceof Error ? err.message : "request failed";
-          dispatch({ type: "apiFailed", error: { kind: "network", message } });
-        }
+        if (!controller.signal.aborted) dispatch(toError(err).error);
       },
     );
-
-    // A newer calculation or all clear supersedes this one.
     return () => {
       controller.abort();
     };
   }, [pending, record]);
 
-  const send = useCallback((event: CalculatorEvent) => {
+  // Live preview: after a pause, evaluate the expression as if "=" were pressed.
+  const expression = phase === "editing" ? previewExpression(tokens) : null;
+  useEffect(() => {
+    if (expression === null) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      // One attempt, no retries: a preview is a hint, not a result.
+      callOperation("evaluate", { expression }, { attempts: 1, signal: controller.signal }).then(
+        (response) => {
+          if (!controller.signal.aborted) {
+            dispatch({ type: "previewReceived", expression, value: response.result });
+          }
+        },
+        () => undefined, // unfinished or invalid expressions are expected while typing
+      );
+    }, PREVIEW_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [expression]);
+
+  const send = useCallback((event: ExpressionEvent) => {
     dispatch(event);
   }, []);
 
-  /** Re-issues the calculation that last failed on the network. */
+  /** Re-issues "=" after a network failure. */
   const retry = useCallback(() => {
-    if (lastFailedRef.current) dispatch(retryEventFor(lastFailedRef.current));
+    dispatch({ type: "equals" });
   }, []);
 
-  return { state, send, retry };
+  const preview =
+    expression !== null && state.preview?.expression === expression ? state.preview.value : null;
+
+  return { state, send, retry, preview };
 }

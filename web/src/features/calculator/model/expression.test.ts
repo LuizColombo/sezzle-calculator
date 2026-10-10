@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  initialScientific,
+  initialExpression,
   isComplete,
   reduceExpression,
   toApiString,
-  type ScientificEvent,
-  type ScientificState,
+  type ExpressionEvent,
+  type ExpressionState,
 } from "./expression";
 
-const KEYS: Record<string, ScientificEvent> = {
+const KEYS: Record<string, ExpressionEvent> = {
   "+": { type: "operator", op: "+" },
   "-": { type: "operator", op: "−" },
   "*": { type: "operator", op: "×" },
@@ -25,23 +25,23 @@ const KEYS: Record<string, ScientificEvent> = {
 };
 
 /** Applies a key script: digits, ". + - * / ^ ( ) % r(√) <(backspace) C =". */
-function run(script: string, from: ScientificState = initialScientific): ScientificState {
-  return (script.match(/./g) ?? []).reduce<ScientificState>(
+function run(script: string, from: ExpressionState = initialExpression): ExpressionState {
+  return (script.match(/./g) ?? []).reduce<ExpressionState>(
     (state, ch) => reduceExpression(state, KEYS[ch] ?? { type: "digit", digit: ch }),
     from,
   );
 }
 
 /** The expression text the API would receive. */
-const api = (state: ScientificState) => toApiString(state.tokens).text;
+const api = (state: ExpressionState) => toApiString(state.tokens).text;
 
-const evaluated = (state: ScientificState, expression: string, value: string) =>
+const evaluated = (state: ExpressionState, expression: string, value: string) =>
   reduceExpression(state, { type: "resultReceived", expression, value });
 
 describe("building an expression", () => {
   it("starts empty", () => {
-    expect(initialScientific.tokens).toEqual([]);
-    expect(initialScientific.phase).toBe("editing");
+    expect(initialExpression.tokens).toEqual([]);
+    expect(initialExpression.phase).toBe("editing");
   });
 
   it("types numbers and operators with spaced binary operators", () => {
@@ -137,7 +137,7 @@ describe("completeness and evaluation", () => {
   it("= on an unfinished expression does nothing", () => {
     const s = run("2+");
     expect(run("=", s)).toBe(s);
-    expect(run("=")).toBe(initialScientific);
+    expect(run("=")).toBe(initialExpression);
   });
 
   it("ignores input while evaluating, except all clear", () => {
@@ -181,7 +181,7 @@ describe("completeness and evaluation", () => {
 });
 
 describe("errors", () => {
-  const syntaxError: ScientificEvent = {
+  const syntaxError: ExpressionEvent = {
     type: "apiFailed",
     error: {
       kind: "api",
@@ -222,10 +222,10 @@ describe("errors", () => {
 
 describe("recall", () => {
   it("inserts a history value as a sealed operand", () => {
-    const recall = (value: string): ScientificEvent => ({ type: "recall", value });
+    const recall = (value: string): ExpressionEvent => ({ type: "recall", value });
     expect(api(reduceExpression(run("2+"), recall("40")))).toBe("2 + 40");
     expect(api(reduceExpression(run("2"), recall("40")))).toBe("2 × 40");
-    expect(api(reduceExpression(initialScientific, recall("-5")))).toBe("-5");
+    expect(api(reduceExpression(initialExpression, recall("-5")))).toBe("-5");
     const sealed = reduceExpression(run("2+"), recall("40"));
     expect(api(run("7", sealed))).toBe("2 + 7"); // a digit replaces a sealed value
   });

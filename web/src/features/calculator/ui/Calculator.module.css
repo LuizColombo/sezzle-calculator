@@ -35,13 +35,6 @@
   margin-bottom: auto;
 }
 
-/* Display and keypad, swapped as one block when the mode changes. */
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
 .toolbarActions {
   display: flex;
   align-items: center;

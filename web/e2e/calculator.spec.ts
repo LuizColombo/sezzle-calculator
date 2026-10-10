@@ -19,15 +19,36 @@ test("adds decimals exactly through the real API", async ({ page }) => {
   await expect(page.getByText("0.1 + 0.2 =")).toBeVisible();
 });
 
-test("reports division by zero with the API's detail", async ({ page }) => {
-  await press(page, "1", "divide", "0", "equals");
-  // The live region announces the detail too; the visible line shows it under "Error".
-  await expect(page.getByRole("status")).toHaveText("Error: division by zero");
-  await expect(page.getByText("division by zero", { exact: true })).toBeVisible();
+test("applies operator precedence and parentheses", async ({ page }) => {
+  await press(page, "2", "add", "3", "multiply", "4", "equals");
+  await expect(page.getByRole("status")).toHaveText("14");
+  await press(
+    page,
+    "all clear",
+    "open parenthesis",
+    "2",
+    "add",
+    "3",
+    "close parenthesis",
+    "multiply",
+    "4",
+    "equals",
+  );
+  await expect(page.getByRole("status")).toHaveText("20");
 });
 
-test("chains operations and keeps a history", async ({ page }) => {
-  await press(page, "2", "add", "3", "multiply", "4", "equals");
+test("previews the result while typing", async ({ page }) => {
+  await press(page, "1", "2", "multiply", "1", "2");
+  await expect(page.getByTestId("preview")).toHaveText("144");
+});
+
+test("reports division by zero with the API's detail", async ({ page }) => {
+  await press(page, "1", "divide", "0", "equals");
+  await expect(page.getByRole("region", { name: "display" })).toContainText("division by zero");
+});
+
+test("keeps a history across reloads", async ({ page }) => {
+  await press(page, "5", "multiply", "4", "equals");
   await expect(page.getByRole("status")).toHaveText("20");
 
   await page.getByRole("button", { name: "History" }).click();
@@ -45,27 +66,4 @@ test("works from the physical keyboard", async ({ page, isMobile }) => {
   await page.keyboard.type("2^10");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toHaveText("1,024");
-});
-
-test("scientific mode applies operator precedence", async ({ page }) => {
-  await page.getByRole("radio", { name: "Scientific" }).click();
-  await press(page, "2", "add", "3", "multiply", "4", "equals");
-  await expect(page.getByRole("status")).toHaveText("14");
-  await press(
-    page,
-    "all clear",
-    "open parenthesis",
-    "2",
-    "add",
-    "3",
-    "close parenthesis",
-    "multiply",
-    "4",
-    "equals",
-  );
-  await expect(page.getByRole("status")).toHaveText("20");
-  // Basic mode evaluates as typed: the same keys give 20.
-  await page.getByRole("radio", { name: "Basic" }).click();
-  await press(page, "2", "add", "3", "multiply", "4", "equals");
-  await expect(page.getByRole("status")).toHaveText("20");
 });

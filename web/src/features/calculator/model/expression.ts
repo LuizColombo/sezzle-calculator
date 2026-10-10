@@ -1,7 +1,7 @@
 /**
- * Scientific mode: an expression built from tokens, evaluated by the API
- * with operator precedence. Like the Basic reducer this is pure; it records
- * a `pending` evaluation and the useScientific hook performs it.
+ * The calculator: an expression built from tokens, evaluated by the API
+ * with operator precedence. The reducer is pure; it records a `pending`
+ * evaluation and the useCalculator hook performs it.
  *
  * The expression is a token list rather than text because every input guard
  * ("no ')' without a '('", "an operator replaces an operator") is a rule
@@ -27,7 +27,7 @@ export interface Evaluated {
   value: string;
 }
 
-export interface ScientificState {
+export interface ExpressionState {
   tokens: ExprToken[];
   phase: "editing" | "evaluating" | "result" | "error";
   result: Evaluated | null;
@@ -37,11 +37,11 @@ export interface ScientificState {
   /** 1-based column (in the API string) of an invalid-expression error. */
   errorPosition: number | null;
   pending: { expression: string } | null;
-  /** Counts value replacements; the display animates on it (as in Basic). */
+  /** Counts value replacements (a result arrives, AC); the display animates on it. */
   replaced: number;
 }
 
-export type ScientificEvent =
+export type ExpressionEvent =
   | { type: "digit"; digit: string }
   | { type: "decimal" }
   | { type: "operator"; op: ExprOp }
@@ -57,7 +57,7 @@ export type ScientificEvent =
   | { type: "resultReceived"; expression: string; value: string }
   | { type: "apiFailed"; error: CalculatorError; position?: number };
 
-export const initialScientific: ScientificState = {
+export const initialExpression: ExpressionState = {
   tokens: [],
   phase: "editing",
   result: null,
@@ -136,12 +136,12 @@ export function toApiString(tokens: ExprToken[]): { text: string; ranges: [numbe
 
 // ── reducer ───────────────────────────────────────────────────────────────
 
-export function reduceExpression(state: ScientificState, event: ScientificEvent): ScientificState {
+export function reduceExpression(state: ExpressionState, event: ExpressionEvent): ExpressionState {
   if (state.phase === "evaluating") {
     switch (event.type) {
       case "resultReceived":
         return {
-          ...initialScientific,
+          ...initialExpression,
           phase: "result",
           result: { expression: event.expression, value: event.value },
           replaced: state.replaced + 1,
@@ -149,7 +149,7 @@ export function reduceExpression(state: ScientificState, event: ScientificEvent)
       case "apiFailed":
         return onFailure(state, event.error, event.position);
       case "allClear":
-        return { ...initialScientific, replaced: state.replaced + 1 };
+        return { ...initialExpression, replaced: state.replaced + 1 };
       default:
         return state;
     }
@@ -157,7 +157,7 @@ export function reduceExpression(state: ScientificState, event: ScientificEvent)
 
   switch (event.type) {
     case "allClear":
-      return { ...initialScientific, replaced: state.replaced + 1 };
+      return { ...initialExpression, replaced: state.replaced + 1 };
     case "previewReceived":
       return { ...state, preview: { expression: event.expression, value: event.value } };
     case "resultReceived":
@@ -176,13 +176,13 @@ export function reduceExpression(state: ScientificState, event: ScientificEvent)
  * result; after an error, backspace and operators keep fixing the same
  * expression and a value key starts over.
  */
-function startEditing(state: ScientificState, event: ScientificEvent): ScientificState {
+function startEditing(state: ExpressionState, event: ExpressionEvent): ExpressionState {
   const startsValue = ["digit", "decimal", "open", "sqrt", "recall"].includes(event.type);
   if (state.phase === "result") {
-    if (startsValue) return { ...initialScientific, replaced: state.replaced };
+    if (startsValue) return { ...initialExpression, replaced: state.replaced };
     const value = state.result?.value ?? "0";
     return {
-      ...initialScientific,
+      ...initialExpression,
       tokens: [{ kind: "number", text: value, sealed: true }],
       replaced: state.replaced,
     };
@@ -194,12 +194,12 @@ function startEditing(state: ScientificState, event: ScientificEvent): Scientifi
   return state;
 }
 
-function edit(state: ScientificState, event: ScientificEvent): ScientificState {
+function edit(state: ExpressionState, event: ExpressionEvent): ExpressionState {
   const tokens = editTokens(state.tokens, event);
   return tokens === state.tokens ? state : { ...state, tokens };
 }
 
-function editTokens(tokens: ExprToken[], event: ScientificEvent): ExprToken[] {
+function editTokens(tokens: ExprToken[], event: ExpressionEvent): ExprToken[] {
   const t = last(tokens);
   switch (event.type) {
     case "digit":
@@ -249,7 +249,7 @@ function editTokens(tokens: ExprToken[], event: ScientificEvent): ExprToken[] {
   }
 }
 
-function onEquals(state: ScientificState): ScientificState {
+function onEquals(state: ExpressionState): ExpressionState {
   const editing = state.phase === "error" ? { ...state, phase: "editing" as const } : state;
   if (editing.phase !== "editing" || !isComplete(editing.tokens)) return state;
   const tokens = closeAll(editing.tokens);
@@ -264,10 +264,10 @@ function onEquals(state: ScientificState): ScientificState {
 }
 
 function onFailure(
-  state: ScientificState,
+  state: ExpressionState,
   error: CalculatorError,
   position?: number,
-): ScientificState {
+): ExpressionState {
   if (error.kind === "network") {
     return { ...state, phase: "editing", pending: null, error };
   }

@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export const HISTORY_KEY = "sezzle-calculator.history.v1";
 const MAX_ENTRIES = 50;
 
+/** Receives each finished calculation; must be stable (useHistory's add is). */
+export type Recorder = (entry: Omit<HistoryEntry, "at">) => void;
+
 export interface HistoryEntry {
   expression: string;
   result: string;

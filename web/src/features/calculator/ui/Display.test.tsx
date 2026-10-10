@@ -1,51 +1,71 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import {
+  initialExpression,
+  reduceExpression,
+  type ExpressionEvent,
+  type ExpressionState,
+} from "../model/expression";
 import { Display } from "./Display";
 
-const base = { expression: null, pending: false, error: null, animationKey: "input" };
+const KEYS: Record<string, ExpressionEvent> = {
+  "+": { type: "operator", op: "+" },
+  "*": { type: "operator", op: "×" },
+  "(": { type: "open" },
+  ")": { type: "close" },
+  "=": { type: "equals" },
+};
+const typed = (script: string, from = initialExpression): ExpressionState =>
+  (script.match(/./g) ?? []).reduce<ExpressionState>(
+    (s, ch) => reduceExpression(s, KEYS[ch] ?? { type: "digit", digit: ch }),
+    from,
+  );
 
 describe("Display", () => {
-  it("shows the formatted value in a polite live region", () => {
-    render(<Display {...base} value="1234.5" />);
-    const status = screen.getByRole("status");
-    expect(status).toHaveTextContent("1,234.5");
-    expect(status).toHaveAttribute("aria-live", "polite");
+  it("shows 0 before anything is typed", () => {
+    render(<Display state={initialExpression} preview={null} />);
+    expect(screen.getByRole("status")).toHaveTextContent("0");
   });
 
-  it("shows the expression line above the value", () => {
-    render(<Display {...base} value="3" expression="1 + 2 =" />);
-    expect(screen.getByText("1 + 2 =")).toBeInTheDocument();
+  it("shows the expression with grouped numbers and the live preview below it", () => {
+    render(<Display state={typed("1234+5*2")} preview="1244" />);
+    expect(screen.getByRole("status")).toHaveTextContent("1,234 + 5 × 2");
+    expect(screen.getByTestId("preview")).toHaveTextContent("1,244");
   });
 
-  it("marks a pending calculation as busy", () => {
-    render(<Display {...base} value="3" pending />);
+  it("shows the result large and the canonical expression above it", () => {
+    const state = reduceExpression(typed("2+3*4="), {
+      type: "resultReceived",
+      expression: "2 + 3 × 4",
+      value: "14",
+    });
+    render(<Display state={state} preview={null} />);
+    expect(screen.getByRole("status")).toHaveTextContent("14");
+    expect(screen.getByText("2 + 3 × 4 =")).toBeInTheDocument();
+  });
+
+  it("underlines the token the API points at and shows the detail", () => {
+    const state = reduceExpression(typed("2+3="), {
+      type: "apiFailed",
+      error: {
+        kind: "api",
+        problem: {
+          type: "x",
+          title: "Invalid expression",
+          status: 400,
+          detail: "unexpected '3' at column 5",
+        },
+      },
+      position: 5,
+    });
+    render(<Display state={state} preview={null} />);
+    const marked = screen.getByText("3");
+    expect(marked).toHaveAttribute("data-error", "true");
+    expect(screen.getByText("unexpected '3' at column 5")).toBeInTheDocument();
+  });
+
+  it("marks a calculation in flight as busy", () => {
+    render(<Display state={typed("2+3=")} preview={null} />);
     expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
-  });
-
-  it("shows the API problem detail instead of the expression on error", () => {
-    render(
-      <Display
-        {...base}
-        value="Error"
-        expression="1 ÷ 0"
-        error={{
-          kind: "api",
-          problem: {
-            type: "x",
-            title: "Division by zero",
-            status: 422,
-            detail: "division by zero",
-          },
-        }}
-      />,
-    );
-    expect(screen.getByRole("status")).toHaveTextContent("Error");
-    expect(screen.getByText("division by zero")).toBeInTheDocument();
-    expect(screen.queryByText("1 ÷ 0")).not.toBeInTheDocument();
-  });
-
-  it("uses a smaller size for long values", () => {
-    render(<Display {...base} value="1234567890123456" />);
-    expect(screen.getByRole("status")).toHaveAttribute("data-size", "xs");
   });
 });
