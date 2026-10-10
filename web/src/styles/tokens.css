@@ -1,0 +1,85 @@
+/*
+ * Design tokens. Every colour, radius, space, type size and motion value the
+ * UI uses lives here; components only reference these custom properties.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* colour — light */
+  --color-bg: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-key: #e9e9ee;
+  --color-key-hover: #dedee4;
+  --color-key-function: #d4d4da;
+  --color-key-function-hover: #c8c8cf;
+  --color-text: #1c1c1e;
+  --color-text-muted: #6e6e73;
+  --color-accent: #8a2be2;
+  --color-accent-hover: #7424c0;
+  --color-on-accent: #ffffff;
+  --color-error: #d0342c;
+  --color-on-error: #ffffff;
+  --color-border: rgb(0 0 0 / 0.08);
+  --color-scrim: rgb(0 0 0 / 0.25);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 24px 64px rgb(0 0 0 / 0.1);
+
+  /* shape */
+  --radius-key: 22px;
+  --radius-card: 32px;
+  --radius-pill: 999px;
+
+  /* spacing (4 pt grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* type */
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto,
+    "Helvetica Neue", sans-serif;
+  --text-display-lg: clamp(48px, 13vw, 72px);
+  --text-display-md: clamp(36px, 9vw, 52px);
+  --text-display-sm: clamp(24px, 6vw, 34px);
+  --text-key: 28px;
+  --text-key-small: 22px;
+  --text-expression: 18px;
+  --text-body: 15px;
+  --text-small: 13px;
+
+  /* motion */
+  --motion-fast: 120ms;
+  --motion-base: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #000000;
+    --color-surface: #161618;
+    --color-key: #2a2a2d;
+    --color-key-hover: #343438;
+    --color-key-function: #48484c;
+    --color-key-function-hover: #545458;
+    --color-text: #f5f5f7;
+    --color-text-muted: #98989d;
+    --color-accent: #a259ff;
+    --color-accent-hover: #b47aff;
+    --color-on-accent: #ffffff;
+    --color-error: #ff6961;
+    --color-on-error: #1c1c1e;
+    --color-border: rgb(255 255 255 / 0.08);
+    --color-scrim: rgb(0 0 0 / 0.5);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 24px 64px rgb(0 0 0 / 0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+  }
+}

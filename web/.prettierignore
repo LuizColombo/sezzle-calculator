@@ -1,0 +1,6 @@
+dist
+coverage
+playwright-report
+test-results
+src/features/calculator/api/schema.gen.ts
+package-lock.json

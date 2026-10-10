@@ -1,0 +1,14 @@
+@import "./reset.css";
+@import "./tokens.css";
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
