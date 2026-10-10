@@ -128,6 +128,9 @@ func TestOperationsInvalidRequests(t *testing.T) {
 		{name: "empty body", body: ``},
 		{name: "trailing data", body: `{"a":"1","b":"2"} {}`},
 		{name: "array body", body: `["1","2"]`},
+		{name: "duplicate key", body: `{"a":"1","a":"5","b":"2"}`},
+		{name: "unterminated object", body: `{"a":"1","b":"2"`},
+		{name: "nested object value", body: `{"a":{"x":"1"},"b":"2"}`},
 		{name: "oversized body", body: `{"a":"` + strings.Repeat("1", 2000) + `","b":"1"}`},
 		{name: "wrong content type", body: `{"a":"1","b":"2"}`, headers: []string{"Content-Type", "text/plain"}},
 	}
@@ -146,7 +149,8 @@ func TestInvalidRequestDetailNamesTheProblem(t *testing.T) {
 	h := newTestHandler()
 	cases := []struct{ body, want string }{
 		{`{"a":"1"}`, `missing field "b"`},
-		{`{"a":"1","b":"2","c":"3"}`, `unexpected field "c"`},
+		{`{"a":"1","b":"2","c":"3"}`, `unexpected field "c"; allowed: a, b`},
+		{`{"a":"1","a":"5","b":"2"}`, `duplicate field "a"`},
 		{`{"a":1,"b":"2"}`, `field "a" must be a string`},
 	}
 	for _, c := range cases {

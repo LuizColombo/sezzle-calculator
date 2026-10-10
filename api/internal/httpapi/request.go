@@ -5,54 +5,78 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"mime"
 	"net/http"
 	"slices"
+	"strings"
 )
 
-// maxBodyBytes bounds request bodies; two 64-digit numbers fit comfortably.
+// maxBodyBytes bounds request bodies; two 34-digit numbers fit many times over.
 const maxBodyBytes = 1024
 
 // errInvalidRequest is wrapped by every decoding failure.
 var errInvalidRequest = errors.New("invalid request")
 
-// decodeInputs reads a JSON object whose keys are exactly fields and whose
-// values are all JSON strings. Any deviation is reported as errInvalidRequest.
+func invalid(format string, args ...any) error {
+	return fmt.Errorf("%w: "+format, append([]any{errInvalidRequest}, args...)...)
+}
+
+// decodeInputs reads a JSON object whose keys are exactly fields, each once,
+// and whose values are all JSON strings. Any deviation is errInvalidRequest.
+//
+// The object is walked token by token rather than decoded into a map so that
+// a repeated key is rejected instead of silently overwriting the first one.
 func decodeInputs(w http.ResponseWriter, r *http.Request, fields []string) (map[string]string, error) {
 	ct, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || ct != "application/json" {
-		return nil, fmt.Errorf("%w: Content-Type must be application/json", errInvalidRequest)
+		return nil, invalid("Content-Type must be application/json")
 	}
 
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes))
-	var raw map[string]json.RawMessage
-	if err := dec.Decode(&raw); err != nil {
+	malformed := func(err error) error {
 		if maxErr := (*http.MaxBytesError)(nil); errors.As(err, &maxErr) {
-			return nil, fmt.Errorf("%w: body exceeds %d bytes", errInvalidRequest, maxBodyBytes)
+			return invalid("body exceeds %d bytes", maxBodyBytes)
 		}
-		return nil, fmt.Errorf("%w: body must be a JSON object", errInvalidRequest)
-	}
-	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return nil, fmt.Errorf("%w: unexpected data after the JSON object", errInvalidRequest)
-	}
-	for _, key := range slices.Sorted(maps.Keys(raw)) {
-		if !slices.Contains(fields, key) {
-			return nil, fmt.Errorf("%w: unexpected field %q; allowed: %q", errInvalidRequest, key, fields)
-		}
+		return invalid("body must be a JSON object")
 	}
 
+	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
+		return nil, malformed(err)
+	}
 	inputs := make(map[string]string, len(fields))
-	for _, f := range fields {
-		value, ok := raw[f]
-		if !ok {
-			return nil, fmt.Errorf("%w: missing field %q", errInvalidRequest, f)
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return nil, malformed(err)
+		}
+		key, _ := tok.(string) // object keys are always strings
+		if !slices.Contains(fields, key) {
+			return nil, invalid("unexpected field %q; allowed: %s", key, strings.Join(fields, ", "))
+		}
+		if _, seen := inputs[key]; seen {
+			return nil, invalid("duplicate field %q", key)
+		}
+		var value json.RawMessage
+		if err := dec.Decode(&value); err != nil {
+			return nil, malformed(err)
 		}
 		var s string
 		if value[0] != '"' || json.Unmarshal(value, &s) != nil {
-			return nil, fmt.Errorf("%w: field %q must be a string, e.g. \"1.5\"", errInvalidRequest, f)
+			return nil, invalid("field %q must be a string, e.g. \"1.5\"", key)
 		}
-		inputs[f] = s
+		inputs[key] = s
+	}
+	if _, err := dec.Token(); err != nil { // the closing brace
+		return nil, malformed(err)
+	}
+	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
+		return nil, invalid("unexpected data after the JSON object")
+	}
+
+	for _, f := range fields {
+		if _, ok := inputs[f]; !ok {
+			return nil, invalid("missing field %q", f)
+		}
 	}
 	return inputs, nil
 }
