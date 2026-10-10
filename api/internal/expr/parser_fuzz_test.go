@@ -17,6 +17,7 @@ func FuzzParse(f *testing.F) {
 		if err != nil {
 			return
 		}
+		_, _ = Eval(n) // evaluation must not panic either, whatever the result
 		canonical := n.String()
 		again, err := Parse(canonical)
 		if err != nil {
