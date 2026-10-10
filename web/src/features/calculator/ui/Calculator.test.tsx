@@ -127,6 +127,34 @@ describe("Calculator", () => {
     delete document.documentElement.dataset.theme;
   });
 
+  it("evaluates with precedence in scientific mode", async () => {
+    render(<Calculator />);
+    await userEvent.click(screen.getByRole("radio", { name: "Scientific" }));
+    await userEvent.keyboard("2+3*4{Enter}");
+    await waitFor(() => {
+      expect(display()).toHaveTextContent("14");
+    });
+    expect(screen.getByRole("region", { name: "display" })).toHaveTextContent("2 + 3 × 4 =");
+  });
+
+  it("evaluates parentheses from the scientific keypad", async () => {
+    render(<Calculator />);
+    await userEvent.click(screen.getByRole("radio", { name: "Scientific" }));
+    await press(
+      "open parenthesis",
+      "2",
+      "add",
+      "3",
+      "close parenthesis",
+      "multiply",
+      "4",
+      "equals",
+    );
+    await waitFor(() => {
+      expect(display()).toHaveTextContent("20");
+    });
+  });
+
   it("links to the API reference", () => {
     render(<Calculator />);
     expect(screen.getByRole("link", { name: /api docs/i })).toHaveAttribute("href", "/docs");

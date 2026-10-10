@@ -52,7 +52,10 @@ export function ModeSwitch({ mode, onChange }: ModeSwitchProps) {
             aria-checked={checked}
             tabIndex={checked ? 0 : -1}
             className={cx(styles.option, checked && styles.checked)}
-            onClick={() => {
+            onClick={(e) => {
+              // As with keypad keys: a pointer click must not keep focus here,
+              // or the next Enter would re-press the switch instead of "=".
+              if (e.detail > 0) e.currentTarget.blur();
               onChange(value);
             }}
             onKeyDown={(e) => {

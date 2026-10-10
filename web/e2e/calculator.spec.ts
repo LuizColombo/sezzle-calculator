@@ -46,3 +46,26 @@ test("works from the physical keyboard", async ({ page, isMobile }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toHaveText("1,024");
 });
+
+test("scientific mode applies operator precedence", async ({ page }) => {
+  await page.getByRole("radio", { name: "Scientific" }).click();
+  await press(page, "2", "add", "3", "multiply", "4", "equals");
+  await expect(page.getByRole("status")).toHaveText("14");
+  await press(
+    page,
+    "all clear",
+    "open parenthesis",
+    "2",
+    "add",
+    "3",
+    "close parenthesis",
+    "multiply",
+    "4",
+    "equals",
+  );
+  await expect(page.getByRole("status")).toHaveText("20");
+  // Basic mode evaluates as typed: the same keys give 20.
+  await page.getByRole("radio", { name: "Basic" }).click();
+  await press(page, "2", "add", "3", "multiply", "4", "equals");
+  await expect(page.getByRole("status")).toHaveText("20");
+});
