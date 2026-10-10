@@ -1,3 +1,5 @@
+import { Calculator } from "./features/calculator/ui/Calculator";
+
 export default function App() {
-  return <main>Sezzle Calculator</main>;
+  return <Calculator />;
 }

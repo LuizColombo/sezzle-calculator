@@ -59,7 +59,8 @@ export function Display({ value, expression, pending, error, animationKey }: Dis
                 : { opacity: 1, y: 0, filter: "blur(0px)", x: 0 }
             }
             exit={{ opacity: 0, y: -18, filter: "blur(8px)", scale: 0.96 }}
-            transition={spring}
+            // Keyframed shake needs a tween; springs only interpolate two values.
+            transition={{ ...spring, x: { duration: 0.4, ease: "easeInOut" } }}
           >
             {formatted}
           </motion.span>
