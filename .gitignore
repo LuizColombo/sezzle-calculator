@@ -1,0 +1,19 @@
+# Go
+api/api
+api/coverage.out
+api/coverage.html
+api/testdata/fuzz/**/[0-9a-f]*
+
+# Node
+web/node_modules/
+web/dist/
+web/coverage/
+web/test-results/
+web/playwright-report/
+web/blob-report/
+
+# Env & editors
+.env
+.DS_Store
+.idea/
+.vscode/
