@@ -74,7 +74,8 @@ Numbers stay strings all the way through. The display formatter groups digits, r
 
 - **Palette:** neutral greys and one accent, Sezzle purple, used only for operators, `=` and interactive text.
 - **Type:** the system UI font (SF Pro on Apple devices), light weight for the display, tabular figures so digits do not jitter.
-- **Themes:** light and dark follow the operating system through `prefers-color-scheme`.
+- **Themes:** light and dark, chosen by a `data-theme` attribute on `<html>`. A sun/moon button switches them; until the user picks one, the theme follows the operating system and tracks changes to it. `public/theme.js` applies the theme before first paint, so a reload never flashes the wrong one; it is a file rather than an inline script so the Content Security Policy stays `script-src 'self'`.
+- **Contrast:** `src/styles/contrast.test.ts` reads `tokens.css` and checks every text/background pair in both themes against WCAG 2.2 (4.5:1 for text, 3:1 for the large key labels and the focus ring). Accent *fills* (operator keys) and accent *text* (links, text buttons) are separate tokens, because text on grey surfaces needs more contrast than a fill does.
 - **Layout:** on phones the calculator fills the screen with the keypad in thumb reach and history as a bottom sheet; from 721 px it becomes a floating card with history as a side panel.
 
 ## Motion

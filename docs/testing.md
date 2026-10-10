@@ -48,6 +48,7 @@ npm run e2e            # Playwright against docker compose (start it first)
 | `model/format` | Grouping, preserving what is being typed, half-even rounding, carries, scientific notation for 1001-digit results and for the API's exponent form, all without `Number()` |
 | `api/client` | Request shape, the signal reaching `fetch`, 4xx and 500 not retried, network errors and 502/503/504 retried with exponential delays, full jitter and the cap, abort during a request and during a backoff wait, invalid success bodies |
 | `hooks` | A calculation round-trip through a mock API, chain results kept out of history, history persistence, limits, corrupt or tampered storage, storage that throws, keyboard mapping, modifiers, focused buttons and editable fields |
+| `styles` | WCAG 2.2 contrast of every text/background token pair, in both themes, read from `tokens.css` |
 | `ui` | Components through the accessibility tree: names, `aria-pressed`, live region, errors, the history panel's confirm-to-clear, Escape handling, and full user flows with the keyboard and the mouse |
 | `e2e` | `0.1 + 0.2 = 0.3` through nginx and Go, division by zero, chaining with history surviving a reload, the physical keyboard — on a desktop and a phone viewport |
 

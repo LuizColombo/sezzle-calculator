@@ -258,7 +258,7 @@ Rules worth stating:
 - **Palette:** neutral graphite scale plus one accent, Sezzle purple (`#8A2BE2` family). Operators use the accent; everything else is monochrome.
 - **Typography:** `system-ui` stack (renders as SF on macOS/iOS), `font-variant-numeric: tabular-nums`. Display scales down as the number grows (3 steps).
 - **Spacing:** 4 pt grid. Key radius large (pill on mobile, rounded-square on desktop).
-- **Themes:** light and dark via `prefers-color-scheme`. No toggle.
+- **Themes:** light and dark; follows the system until the user picks one with a toggle (see §10).
 - **Motion tokens:** durations (`--motion-fast: 120ms`, `--motion-base: 220ms`), spring presets for `motion`. All honour `prefers-reduced-motion: reduce` (animations collapse to instant).
 
 ### 5.5 Motion (via `motion`)
@@ -375,7 +375,7 @@ Status badge in the README. Coverage numbers are quoted in `docs/testing.md` and
 - Expression evaluation / operator precedence (Phase 2).
 - Server-side history or persistence.
 - Authentication, rate limiting, metrics endpoint. Mentioned in `docs/backend.md` as natural next steps.
-- Theme toggle, i18n.
+- i18n.
 
 ## 10. Revisions after review
 
@@ -387,3 +387,4 @@ Changes made after the independent review of the backend (checkpoint 1). The cod
 - **Duplicate JSON keys** are rejected with `400 invalid-request` instead of last-one-wins.
 - **Panics** after a response started no longer append a 500 body; `http.ErrAbortHandler` propagates; net/http's own errors go to the JSON log.
 - **Frontend, after checkpoints 2 and 3:** operands restored after a network failure are replaced by the next key, not edited; percent records its intent; the display animates on a `replaced` counter owned by the reducer; the phone breakpoint is 720 px (was 480); clicking a key does not keep focus on it, so Enter means `=`; the history sheet is a modal dialog on phones.
+- **Theme toggle, added after delivery review:** not everyone likes dark mode, so a toggle overrides the system theme and is remembered. A contrast test over the tokens found and fixed three WCAG failures.

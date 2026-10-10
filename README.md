@@ -35,7 +35,7 @@ Or `make dev`, which runs both. `make help` lists the other targets.
 - **A calculator that behaves like one:** chaining (`2 + 3 × 4` evaluates left to right), `200 + 15 %` = `230`, ± and √ on either operand, backspace, full keyboard support.
 - **History** of the last 50 results, persisted locally; click one to reuse it.
 - **Errors explained:** division by zero, out-of-range numbers and invalid input come back as RFC 9457 Problem Details and are shown in place. Network failures retry with exponential backoff, then offer a Retry.
-- **Light and dark** themes, motion that respects reduced-motion settings, screen-reader labels, and a phone layout.
+- **Light and dark themes** with a toggle (it follows the system until you choose), every colour pair checked against WCAG contrast in CI, motion that respects reduced-motion settings, screen-reader labels, and a phone layout.
 
 ## API in three calls
 
