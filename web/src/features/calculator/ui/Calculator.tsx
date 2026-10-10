@@ -32,62 +32,64 @@ export function Calculator({ tuning = {} }: CalculatorProps) {
 
   return (
     <div className={styles.layout}>
-      <motion.main
-        layout="position"
-        transition={{ type: "spring", stiffness: 380, damping: 36 }}
-        className={styles.card}
-        // On phones the history sheet covers the calculator: take it out of the
-        // tab order and the accessibility tree while the sheet is open.
-        inert={narrow && historyOpen}
-      >
-        <h1 className={styles.visuallyHidden}>Sezzle Calculator</h1>
-        <div className={styles.toolbar}>
-          <a className={styles.toolbarLink} href="/docs" target="_blank" rel="noreferrer">
-            API docs
-          </a>
-          <button
-            ref={historyButton}
-            type="button"
-            className={styles.toolbarButton}
-            aria-expanded={historyOpen}
-            aria-controls={HISTORY_PANEL_ID}
-            onClick={() => {
-              setHistoryOpen((open) => !open);
-            }}
-          >
-            <ClockIcon />
-            History
-          </button>
-        </div>
+      <div className={styles.stage}>
+        <motion.main
+          layout="position"
+          transition={{ type: "spring", stiffness: 380, damping: 36 }}
+          className={styles.card}
+          // On phones the history sheet covers the calculator: take it out of the
+          // tab order and the accessibility tree while the sheet is open.
+          inert={narrow && historyOpen}
+        >
+          <h1 className={styles.visuallyHidden}>Sezzle Calculator</h1>
+          <div className={styles.toolbar}>
+            <a className={styles.toolbarLink} href="/docs" target="_blank" rel="noreferrer">
+              API docs
+            </a>
+            <button
+              ref={historyButton}
+              type="button"
+              className={styles.toolbarButton}
+              aria-expanded={historyOpen}
+              aria-controls={HISTORY_PANEL_ID}
+              onClick={() => {
+                setHistoryOpen((open) => !open);
+              }}
+            >
+              <ClockIcon />
+              History
+            </button>
+          </div>
 
-        <StatusBanner
-          message={offline ? "Can’t reach the calculation service." : null}
-          onRetry={retry}
+          <StatusBanner
+            message={offline ? "Can’t reach the calculation service." : null}
+            onRetry={retry}
+          />
+
+          <Display
+            value={state.display}
+            expression={state.expression}
+            pending={state.phase === "awaitingResult"}
+            error={state.error}
+            animationKey={String(state.replaced)}
+          />
+
+          <Keypad
+            send={send}
+            activeOperator={state.phase === "operatorChosen" ? state.operator : null}
+          />
+        </motion.main>
+
+        <HistoryPanel
+          open={historyOpen}
+          entries={history.entries}
+          onRecall={(value) => {
+            send({ type: "recall", value });
+          }}
+          onClear={history.clear}
+          onClose={closeHistory}
         />
-
-        <Display
-          value={state.display}
-          expression={state.expression}
-          pending={state.phase === "awaitingResult"}
-          error={state.error}
-          animationKey={String(state.replaced)}
-        />
-
-        <Keypad
-          send={send}
-          activeOperator={state.phase === "operatorChosen" ? state.operator : null}
-        />
-      </motion.main>
-
-      <HistoryPanel
-        open={historyOpen}
-        entries={history.entries}
-        onRecall={(value) => {
-          send({ type: "recall", value });
-        }}
-        onClear={history.clear}
-        onClose={closeHistory}
-      />
+      </div>
     </div>
   );
 }

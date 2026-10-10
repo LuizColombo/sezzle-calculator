@@ -8,7 +8,11 @@
 
 .side {
   width: 300px;
-  max-height: min(640px, calc(100dvh - 2 * var(--space-8)));
+  /*
+   * contain: size gives the panel no height of its own, so the shared row is
+   * as tall as the card and the panel stretches to match; long history scrolls.
+   */
+  contain: size;
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
 }
@@ -43,6 +47,7 @@
 .title {
   font-size: 17px;
   font-weight: 600;
+  margin-right: auto;
 }
 
 .actions {
@@ -76,6 +81,8 @@
   overflow-y: auto;
   padding: var(--space-2);
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-key-function) transparent;
 }
 
 .entry {
@@ -110,7 +117,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 400;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }

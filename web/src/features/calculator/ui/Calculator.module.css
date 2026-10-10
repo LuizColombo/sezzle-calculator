@@ -2,8 +2,16 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: var(--space-6);
   min-height: 100%;
+}
+
+/* Card and side panel share one row, so the panel matches the card's height. */
+.stage {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-6);
+  width: 100%;
 }
 
 .card {
@@ -65,6 +73,10 @@
   .layout {
     align-items: center;
     padding: var(--space-8);
+  }
+
+  .stage {
+    width: auto;
   }
 
   .card {
