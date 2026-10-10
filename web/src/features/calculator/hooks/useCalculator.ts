@@ -73,8 +73,11 @@ export function useCalculator(tuning: TuningOptions = {}) {
         if (controller.signal.aborted) return;
         lastFailedRef.current = null;
         dispatch({ type: "resultReceived", result: response.result });
-        // Intermediate results of a chain ("2 + 3 ×") are not history entries.
-        if (pending.kind !== "binary" || pending.then.type === "show") {
+        // Only finished calculations are history entries: not the "5" of a
+        // chain ("2 + 3 ×"), nor the "30" of "200 + 15 %" before "=".
+        const finished =
+          pending.kind === "binary" ? pending.then.type === "show" : pending.resume === "result";
+        if (finished) {
           add({ expression: historyExpression(pending), result: response.result });
         }
       },

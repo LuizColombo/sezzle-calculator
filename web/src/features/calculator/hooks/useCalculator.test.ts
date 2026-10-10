@@ -55,7 +55,7 @@ describe("useCalculator", () => {
     expect(result.current.history.entries[0]).toMatchObject({ expression: "√16", result: "4" });
   });
 
-  it("describes a percentage of the first operand in history", async () => {
+  it("records 200 + 5% once, as the final sum, not the intermediate percentage", async () => {
     const { result } = renderHook(() => useCalculator());
     sendAll(result.current.send, [
       digit("2"),
@@ -68,10 +68,22 @@ describe("useCalculator", () => {
     await waitFor(() => {
       expect(result.current.state.display).toBe("10");
     });
-    expect(result.current.history.entries[0]).toMatchObject({
-      expression: "5% of 200",
-      result: "10",
+    expect(result.current.history.entries).toHaveLength(0);
+
+    sendAll(result.current.send, [{ type: "equals" }]);
+    await waitFor(() => {
+      expect(result.current.state.display).toBe("210");
     });
+    expect(result.current.history.entries.map((e) => e.expression)).toEqual(["200 + 10 ="]);
+  });
+
+  it("describes a standalone percentage in history", async () => {
+    const { result } = renderHook(() => useCalculator());
+    sendAll(result.current.send, [digit("5"), digit("0"), { type: "unary", operator: "percent" }]);
+    await waitFor(() => {
+      expect(result.current.state.display).toBe("0.5");
+    });
+    expect(result.current.history.entries[0]).toMatchObject({ expression: "50%", result: "0.5" });
   });
 
   it("surfaces an API problem as the error state, without history", async () => {
