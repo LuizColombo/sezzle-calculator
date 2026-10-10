@@ -32,12 +32,12 @@ Or `make dev`, which runs both. `make help` lists the other targets.
 
 - **Operations:** add, subtract, multiply, divide, power, square root, percentage — every required and optional one.
 - **Decimal arithmetic** with 34 significant digits, never binary floats ([why](docs/adr/0002-decimal-arithmetic.md)).
-- **A calculator that behaves like one:** chaining (`2 + 3 × 4` evaluates left to right), `200 + 15 %` = `230`, ± and √ on either operand, backspace, full keyboard support.
+- **Two modes.** *Basic* evaluates as you type, like a phone calculator (`2 + 3 × 4` = 20, `200 + 15 %` = 230, ± and √ on either operand). *Scientific* applies operator precedence and parentheses (`2 + 3 × 4` = 14, `(2 + 3) × 4` = 20) with a live preview while you type, evaluated by the server's own parser so both modes use the same decimal arithmetic.
 - **History** of the last 50 results, persisted locally; click one to reuse it.
 - **Errors explained:** division by zero, out-of-range numbers and invalid input come back as RFC 9457 Problem Details and are shown in place. Network failures retry with exponential backoff, then offer a Retry.
 - **Light and dark themes** with a toggle (it follows the system until you choose), every colour pair checked against WCAG contrast in CI, motion that respects reduced-motion settings, screen-reader labels, and a phone layout.
 
-## API in three calls
+## API in four calls
 
 ```bash
 curl -s -X POST localhost:8080/api/v1/add -H 'Content-Type: application/json' -d '{"a":"0.1","b":"0.2"}'
@@ -45,6 +45,9 @@ curl -s -X POST localhost:8080/api/v1/add -H 'Content-Type: application/json' -d
 
 curl -s -X POST localhost:8080/api/v1/sqrt -H 'Content-Type: application/json' -d '{"value":"2"}'
 # {"operation":"sqrt","inputs":{"value":"2"},"result":"1.414213562373095"}
+
+curl -s -X POST localhost:8080/api/v1/evaluate -H 'Content-Type: application/json' -d '{"expression":"2 + (3 − 1) × 4^2 / √16"}'
+# {"expression":"2 + (3 − 1) × 4 ^ 2 ÷ √16","result":"10"}
 
 curl -s -X POST localhost:8080/api/v1/divide -H 'Content-Type: application/json' -d '{"a":"1","b":"0"}'
 # {"type":"…/docs/api.md#division-by-zero","title":"Division by zero","status":422,"detail":"division by zero","instance":"/api/v1/divide","requestId":"…"}
@@ -64,8 +67,9 @@ Numbers are JSON **strings** so no precision is lost on the wire. Every endpoint
 | OpenAPI as the source of truth | Frontend types are generated from it; CI fails on drift. | [frontend.md](docs/frontend.md#talking-to-the-api) |
 | A pure state machine for the calculator | All behaviour is testable without React or a network. | [frontend.md](docs/frontend.md#the-state-machine) |
 | CSS Modules on design tokens | A small bespoke design system reads best as one token sheet. | [ADR 6](docs/adr/0006-css-modules-over-tailwind.md) |
+| Pratt parser on the server for precedence | One table of binding powers; one implementation of decimal arithmetic for both modes. | [ADR 8](docs/adr/0008-pratt-parser.md) |
 
-**Assumptions.** Operations are evaluated as typed, left to right, like a basic calculator; operator precedence (`2 + 3 × 4 = 14`) is planned as a separate phase with its own endpoint. Results are rounded to 16 decimal places (tiny non-zero results switch to exponent notation rather than showing `0`). History is per browser; there is no server-side state or authentication.
+**Assumptions.** Basic mode evaluates as typed, left to right; Scientific mode sends the whole expression to `POST /api/v1/evaluate` (a Pratt parser, [ADR 8](docs/adr/0008-pratt-parser.md)). Results are rounded to 16 decimal places (tiny non-zero results switch to exponent notation rather than showing `0`). History is per browser; there is no server-side state or authentication.
 
 ## Tests
 

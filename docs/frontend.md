@@ -26,6 +26,12 @@ web/src/
 
 The dependency direction is `ui → hooks → model/api`. Nothing in `model` imports React; nothing in `ui` calls `fetch`.
 
+## Modes
+
+A segmented control switches **Basic** and **Scientific** (remembered across visits). `Calculator` holds both modes' hooks and one shared history; the mode decides which one renders and receives keys, and switching clears the current entry of both.
+
+**Scientific** keeps the expression as a token list in a pure reducer, `model/expression.ts`, where the input guards live: an operator replaces an operator, `−` where an operand is expected becomes a sign, `)` needs an open `(`, `(` or `√` after a number inserts `×`, `=` closes open parentheses, and recalled values or previous results are *sealed* (replaced, never edited). `useScientific` evaluates on `=` and shows a **live preview**: 250 ms after the last edit of a complete expression it calls `/evaluate`, and any newer edit aborts it. An `invalid-expression` error underlines the token at the column the API reports. The display swaps the expression and the result with shared layout animations.
+
 ## The state machine
 
 `reducer.ts` is the whole calculator: `reduce(state, event) → state`, with no side effects. It is the most heavily tested file.
