@@ -58,17 +58,19 @@ func TestEvaluateDomainErrors(t *testing.T) {
 		expression string
 		status     int
 		slug       string
+		position   int // only number errors have a location; arithmetic errors do not
 	}{
-		{"1 ÷ (2 − 2)", 422, "division-by-zero"},
-		{"√(0 − 4)", 422, "negative-square-root"},
-		{"1 + " + strings.Repeat("9", 35), 422, "number-too-large"},
+		{"1 ÷ (2 − 2)", 422, "division-by-zero", 0},
+		{"√(0 − 4)", 422, "negative-square-root", 0},
+		{"1 + " + strings.Repeat("9", 35), 422, "number-too-large", 5},
+		{"2 + 1.2.3", 400, "invalid-number", 5},
 	}
 	for _, c := range cases {
 		t.Run(c.slug, func(t *testing.T) {
 			body, _ := json.Marshal(map[string]string{"expression": c.expression})
 			rec := post(t, newTestHandler(), "/api/v1/evaluate", string(body))
 			p := decodeProblem(t, rec)
-			if rec.Code != c.status || !strings.HasSuffix(p.Type, "#"+c.slug) || p.Position != 0 {
+			if rec.Code != c.status || !strings.HasSuffix(p.Type, "#"+c.slug) || p.Position != c.position {
 				t.Fatalf("got %d %s position=%d", rec.Code, p.Type, p.Position)
 			}
 		})

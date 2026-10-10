@@ -114,7 +114,7 @@ func (p *parser) prefix() (Node, error) {
 	case Number:
 		v, err := calc.Parse(t.Text)
 		if err != nil {
-			return nil, fmt.Errorf("%w at column %d", err, t.Column)
+			return nil, &NumberError{Column: t.Column, Err: err}
 		}
 		return &Num{Value: v, Text: t.Text}, nil
 	case LParen:

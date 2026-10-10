@@ -79,6 +79,8 @@ func (op Operation) handler() http.HandlerFunc {
 }
 
 // evaluateOperation describes POST /api/v1/evaluate in the operations list.
+// It is listed only: it is routed separately in server.go and has no
+// binary/unary function, so it must never join the operations table.
 var evaluateOperation = Operation{
 	Name: "evaluate", Path: basePath + "evaluate", Arity: 1, Params: []string{"expression"},
 }

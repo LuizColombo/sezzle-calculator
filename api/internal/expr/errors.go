@@ -39,6 +39,19 @@ func (e *SyntaxError) Error() string {
 // Unwrap makes errors.Is(err, ErrSyntax) true.
 func (e *SyntaxError) Unwrap() error { return ErrSyntax }
 
+// NumberError is an invalid number inside an expression. It wraps the calc
+// error, so the number keeps its phase-1 problem type (invalid-number,
+// number-too-large), and adds where it is.
+type NumberError struct {
+	Column int
+	Err    error
+}
+
+func (e *NumberError) Error() string { return fmt.Sprintf("%v at column %d", e.Err, e.Column) }
+
+// Unwrap exposes the calc error to errors.Is.
+func (e *NumberError) Unwrap() error { return e.Err }
+
 func syntaxError(column int, format string, args ...any) error {
 	return &SyntaxError{Column: column, Msg: fmt.Sprintf(format, args...)}
 }

@@ -93,5 +93,8 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	if se := (*expr.SyntaxError)(nil); errors.As(err, &se) {
 		p.Position = se.Column
 	}
+	if ne := (*expr.NumberError)(nil); errors.As(err, &ne) {
+		p.Position = ne.Column
+	}
 	sendProblem(w, r, p)
 }

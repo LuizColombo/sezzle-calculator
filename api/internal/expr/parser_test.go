@@ -159,4 +159,8 @@ func TestParseNumberErrorsKeepTheirDomainError(t *testing.T) {
 	if errors.Is(err, ErrSyntax) {
 		t.Fatal("a number error is not a syntax error")
 	}
+	var ne *NumberError
+	if !errors.As(err, &ne) || ne.Column != 5 {
+		t.Fatalf("err = %v, want a *NumberError at column 5", err)
+	}
 }
