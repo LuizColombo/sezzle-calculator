@@ -62,8 +62,11 @@ function fromExponentForm(unsigned: string): string {
   return scientific(digits, Number(exp) + int.length - 1 - leadingZeros);
 }
 
-/** Formats a raw decimal string for the display. */
-export function formatDisplay(raw: string): string {
+/**
+ * Formats a raw decimal string for the display. `maxDigits` is the number of
+ * significant digits shown before rounding; the history list uses fewer.
+ */
+export function formatDisplay(raw: string, maxDigits = MAX_DISPLAY_DIGITS): string {
   if (raw === "Error") return raw;
 
   const negative = raw.startsWith("-");
@@ -76,13 +79,13 @@ export function formatDisplay(raw: string): string {
   const frac = dot === -1 ? "" : unsigned.slice(dot + 1);
 
   // Anything the user can type fits; show it verbatim (keeps "1." and "1.50").
-  if (digitCount(int, frac) <= MAX_DISPLAY_DIGITS) {
+  if (digitCount(int, frac) <= maxDigits) {
     return `${sign}${groupThousands(int)}${dot === -1 ? "" : "."}${frac}`;
   }
-  if (int.length > MAX_DISPLAY_DIGITS) {
+  if (int.length > maxDigits) {
     return sign + scientific(int, int.length - 1);
   }
-  const places = MAX_DISPLAY_DIGITS - (int === "0" ? 0 : int.length);
+  const places = maxDigits - (int === "0" ? 0 : int.length);
   const [roundedInt, roundedFrac] = roundFraction(int, frac, places);
   return `${sign}${groupThousands(roundedInt)}${roundedFrac ? `.${roundedFrac}` : ""}`;
 }

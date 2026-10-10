@@ -15,6 +15,8 @@ interface HistoryPanelProps {
 }
 
 const CONFIRM_MS = 4000;
+/** Significant digits shown per entry; the full value is recalled on click. */
+const HISTORY_DIGITS = 12;
 const TITLE_ID = "history-title";
 export const HISTORY_PANEL_ID = "history-panel";
 const sheet = { type: "spring", stiffness: 380, damping: 36 } as const;
@@ -166,7 +168,9 @@ function PanelContent({ entries, onRecall, onClear, onClose }: Omit<HistoryPanel
                   }}
                 >
                   <span className={styles.entryExpression}>{entry.expression}</span>
-                  <span className={styles.entryResult}>{formatDisplay(entry.result)}</span>
+                  <span className={styles.entryResult}>
+                    {formatDisplay(entry.result, HISTORY_DIGITS)}
+                  </span>
                 </button>
               </motion.li>
             ))}

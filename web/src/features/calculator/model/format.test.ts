@@ -44,6 +44,15 @@ describe("formatDisplay", () => {
   });
 });
 
+describe("compact formatting", () => {
+  it("keeps fewer significant digits when asked", () => {
+    expect(formatDisplay("1.414213562373095", 12)).toBe("1.41421356237");
+    expect(formatDisplay("0.3333333333333333", 12)).toBe("0.333333333333");
+    expect(formatDisplay("287.4885", 12)).toBe("287.4885");
+    expect(formatDisplay("18446744073709551616", 12)).toBe("1.844674407e+19");
+  });
+});
+
 describe("rounding", () => {
   it("rounds half to even, like the API", () => {
     expect(formatDisplay("0.12345678901234565")).toBe("0.1234567890123456");
